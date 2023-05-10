@@ -1,6 +1,8 @@
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import NavbarButton from '../components/NavbarButton';
+import useAppHeaderContext from '../hooks/useAppHeaderContext';
+import { BASE_URL_IMG, VIEW_PADDING } from './cs-constants';
 import {
   Box,
   HStack,
@@ -15,40 +17,24 @@ import {
   CSTeacher,
   CSUsers
 } from '../icons/CSIcons';
-import { Outlet, useLocation, useParams } from 'react-router-dom';
-import { BASE_URL_IMG, VIEW_PADDING } from './cs-constants';
-import { LocationParams } from '../components/locations/LocationDetailView';
-import { UserDetailParams } from '../components/users/UserDetailView';
+import { Outlet } from 'react-router-dom';
+import { NotAllowedIcon } from '@chakra-ui/icons';
 
 const MainLayout = () => {
-  const { cityId } = useParams<LocationParams>()
-  const { userId } = useParams<UserDetailParams>()
-  const { pathname } = useLocation()
-  const regexp = new RegExp(`\/(${cityId}|${userId})`, 'g')
-  const section = pathname.replace(regexp, '').split("/").pop() ?? ""
-  const getInfo = {
-    "admin": { title: "Inicio" },
-    "users": { title: "Usuarios", icon: CSUsers },
-    "locations": { title: "Instalaciones", icon: CSBuilding },
-    "courses": { title: "Programas", icon: CSTeacher },
-    "gallery": { title: "Galería", icon: CSGallery },
-    "calendar": { title: "Calendario", icon: CSCalendar },
-    "statistics": { title: "Estadísticas", icon: CSChart }
-  }[section]
-
+  const { icon, title } = useAppHeaderContext()
   return (
     <HStack h="100vh" bg='gray.200' overflow='hidden'>
       <Navbar logo={<Image src={`${BASE_URL_IMG}/cs_sm.png`} />} logoHref='/admin'>
-        <NavbarButton href="users" icon={CSUsers} />
-        <NavbarButton href="locations" icon={CSBuilding} />
-        <NavbarButton href="courses" icon={CSTeacher} />
-        <NavbarButton href="gallery" icon={CSGallery} />
-        <NavbarButton href="calendar" icon={CSCalendar} />
-        <NavbarButton href="statistics" icon={CSChart} />
+        <NavbarButton href="users" icon={CSUsers} text="Usuarios" />
+        <NavbarButton href="locations" icon={CSBuilding} text="Instalaciones" />
+        <NavbarButton href="courses" icon={CSTeacher} text="Cursos" />
+        <NavbarButton href="gallery" icon={CSGallery} text="Galería" />
+        <NavbarButton href="calendar" icon={CSCalendar} text="Calendario" />
+        <NavbarButton href="statistics" icon={CSChart} text="Estadisticas" />
       </Navbar>
       <Box w='full' h='full' bg='cream.50' overflow="auto">
         <VStack p={VIEW_PADDING} spacing="5">
-          <Header icon={getInfo?.icon} text={getInfo?.title ?? "Error"} />
+          <Header icon={icon.get ?? NotAllowedIcon} text={title.get} />
           <Outlet />
         </VStack>
       </Box>

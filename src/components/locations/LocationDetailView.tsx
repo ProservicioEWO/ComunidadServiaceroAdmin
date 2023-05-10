@@ -1,31 +1,23 @@
+import DataList from '../DataList';
+import DataListItem from '../DataListItem';
+import useFetch from '../../hooks/useFetch';
+import { AddLocationMenu } from '../locations';
 import {
-  Button,
   Card,
   CardBody,
-  CardHeader,
-  Flex,
   Text,
   useToast,
   VStack
 } from '@chakra-ui/react';
-import { AddIcon, DeleteIcon, SearchIcon } from '@chakra-ui/icons';
-import { useCallback, useEffect, useState } from 'react';
-
-import DataList from '../DataList';
-import DataListItem from '../DataListItem';
+import { DeleteIcon, SearchIcon } from '@chakra-ui/icons';
 import { InputChangeEvent } from '../../shared/typeAlias';
-import useFetch from '../../hooks/useFetch';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import AddLocationMenu from './AddLocationMenu';
+import { Location } from '../../models/Location';
+import useAppContext from '../../hooks/useAppContext';
 
 export interface LocationParams extends Record<string, string> {
   cityId: string
-}
-
-export interface Location {
-  id: number,
-  name: string,
-  cityId: number
 }
 
 const filterCallback = (search: string) => {
@@ -39,15 +31,23 @@ const LocationDetailView = () => {
   const toast = useToast()
   const [searchValue, setSearchValue] = useState("")
   const { cityId } = useParams<LocationParams>()
-  const { data, loading, error, refresh } = useFetch<Location[]>("/cities/:id/locations", { id: cityId })
-  const nextId = Math.max(...(data?.map(e=>e.id) ?? []))
+  const {
+    data,
+    loading,
+    error,
+    fetchData
+  } = useFetch<Location[]>()
+  const { newId } = useAppContext()
   const handleSearch = useCallback(({ target: { value } }: InputChangeEvent) => {
     setSearchValue(value)
   }, [])
   const handleFilter = useCallback(filterCallback(searchValue), [searchValue])
-  
+
   useEffect(() => {
-    refresh()
+    fetchData("/cities/:id/locations", { id: cityId })
+  }, [cityId])
+
+  useEffect(() => {
     if (error) {
       toast({
         title: error,
@@ -57,39 +57,41 @@ const LocationDetailView = () => {
         isClosable: true
       })
     }
-  }, [cityId, error])
+  }, [error])
+
   return (
     <Card>
       <CardBody>
         <VStack align='stretch'>
-          <AddLocationMenu nextId={nextId + 1}/>
-          {
-            data &&
-            <DataList<Location>
-              list={data}
-              isLoading={loading}
-              options={{
-                placeholder: "Buscar instalación",
-                searchIcon: <SearchIcon />
-              }}
-              onSearch={handleSearch}
-              onFilter={handleFilter}
-              searchValue={searchValue}>
-              {
-                ({ id, name }) => (
-                  <DataListItem
-                    key={id}
-                    loading={false}
-                    onDelete={async () => { }}
-                    options={{
-                      icon: <DeleteIcon color="red.500" />
-                    }}>
-                    <Text>{name}</Text>
-                  </DataListItem>
-                )
-              }
-            </DataList>
-          }
+          <AddLocationMenu
+            isDisabled={loading}
+            nextId={newId}
+            cityId={Number(cityId)}
+            toData={data} />
+          <DataList<Location>
+            list={data}
+            isLoading={loading}
+            options={{
+              placeholder: "Buscar instalación",
+              searchIcon: <SearchIcon />
+            }}
+            onSearch={handleSearch}
+            onFilter={handleFilter}
+            searchValue={searchValue}>
+            {
+              ({ id, name }) => (
+                <DataListItem
+                  key={id}
+                  loading={false}
+                  onDelete={async () => { }}
+                  options={{
+                    icon: <DeleteIcon color="red.500" />
+                  }}>
+                  <Text>{name}</Text>
+                </DataListItem>
+              )
+            }
+          </DataList>
         </VStack>
       </CardBody>
     </Card>

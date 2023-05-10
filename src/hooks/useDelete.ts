@@ -4,6 +4,7 @@ import { BASE_URL_API } from "../shared/cs-constants"
 const useDeleteData = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
   const deleteData = async (endpoint: string, id: string | number) => {
     setLoading(true)
     try {
@@ -13,16 +14,22 @@ const useDeleteData = () => {
           "Content-Type": "application/json",
         }
       })
-      if(!response.ok){
-        throw new Error("Hubo un problema borrando el registro")
+      if (!response.ok) {
+        throw new Error(`${response.status} ${response.statusText}`)
       }
     } catch (error) {
-      if(error instanceof Error){
-        setError(error.message)
+      if (error instanceof Error) {
+        if (error.message === 'Failed to fetch') {
+          setError('No se pudo conectar al servidor. Por favor, revise su conexión de red.')
+        } else {
+          setError(error.message)
+        }
       }
+      return false
     } finally {
       setLoading(false)
     }
+    return true
   }
 
   return { loading, error, deleteData }

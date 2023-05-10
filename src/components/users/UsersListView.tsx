@@ -1,80 +1,60 @@
-import {
-  HStack,
-  Image,
-  Text,
-  useToast
-} from '@chakra-ui/react';
-import { useCallback, useEffect, useState } from 'react';
-
-import { NavLink } from 'react-router-dom';
-import useDeleteData from '../../hooks/useDelete';
-import useFetch from '../../hooks/useFetch';
-import { InputChangeEvent } from '../../shared/typeAlias';
 import DataList from '../DataList';
 import DataListItem from '../DataListItem';
-
-export interface UsersDataResponse {
-  id: number,
-  name: string,
-  lastname: string,
-  enterprise: {
-    id: number,
-    logo: string
-  }
-}
+import useAppContext from '../../hooks/useAppContext';
+import useCustomToast from '../../hooks/useCustomToast';
+import useDeleteData from '../../hooks/useDelete';
+import { Box, HStack, Image, Text } from '@chakra-ui/react';
+import { InputChangeEvent } from '../../shared/typeAlias';
+import { NavLink, useNavigate, useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { User } from '../../models/User';
+import { UserDetailParams } from './UserDetailView';
 
 const filterCallback = (search: string) => {
   const regex = new RegExp(`^${search}[\\s\\w]*`)
-  return (data: UsersDataResponse) => (
+  return (data: User) => (
     search === "" || regex.test(data.name) || regex.test(data.lastname)
   )
 }
 
 const UsersListView = () => {
-  const toast = useToast()
-  const [dataList, setDataList] = useState<UsersDataResponse[]>([])
+  const navigate = useNavigate()
   const [search, setSearch] = useState("")
+  const { users, password } = useAppContext()
+  const { userId } = useParams<UserDetailParams>()
+  const { successToast, errorToast } = useCustomToast()
   const { loading: deleteLoading, error: deleteError, deleteData } = useDeleteData()
-  const { data, loading, error } = useFetch<UsersDataResponse[]>("/users?_expand=enterprise")
   const handleSearch = useCallback(({ target: { value } }: InputChangeEvent) => setSearch(value), [])
   const handleFilter = useCallback(filterCallback(search), [search])
-  const handleDeleteUser = useCallback(async (itemId: string | number) => {
-    await deleteData("/users", itemId)
-    if (!deleteError) {
-      const newDataList = dataList.filter(e => e.id !== itemId)
-      setDataList(newDataList)
+  const handleDeleteUser = async (itemId: string | number) => {
+    const ok = await deleteData("/users", itemId)
+    if (ok) {
+      const newDataList = users.get?.filter(e => e.id !== itemId)
+      if (newDataList) {
+        users.set([...newDataList])
+        successToast("Se eliminó el usuario con éxito.")
+        if (userId && String(itemId) === userId) {
+          navigate(`/admin/users`)
+        }
+      }
     }
-  }, [dataList, deleteError])
+  }
 
   useEffect(() => {
-    if (data) {
-      setDataList(data)
+    if (users.state.error) {
+      errorToast(users.state.error)
     }
-    if (error) {
-      toast({
-        title: error,
-        description: "Ocurrió un error. Por favor, inténtalo más tarde.",
-        position: 'bottom-right',
-        status: 'error',
-        isClosable: true
-      })
-    }
+
     if (deleteError) {
-      toast({
-        title: deleteError,
-        description: "Ocurrió un error. Por favor, inténtalo más tarde.",
-        position: 'bottom-right',
-        status: 'error',
-        isClosable: true
-      })
+      errorToast(deleteError)
     }
-  }, [error, deleteError, data])
+  }, [deleteError, users.state.error])
 
   return (
-    <DataList<UsersDataResponse>
-      list={dataList}
-      isLoading={loading}
-      error={error}
+    <DataList<User>
+      list={users.get}
+      isLoading={users.state.loading}
+      error={!!users.state.error}
       searchValue={search}
       onFilter={handleFilter}
       onSearch={handleSearch}>
@@ -84,24 +64,26 @@ const UsersListView = () => {
             key={id}
             loading={deleteLoading}
             onDelete={() => handleDeleteUser(id)}>
-            <NavLink to={`${id}`}>
-              {
-                ({ isActive }) => (
-                  <HStack>
-                    <Image src={logo} boxSize="8" />
-                    <Text
-                      style={
-                        isActive ? {
-                          fontWeight: 'bold',
-                          textDecoration: 'underline'
-                        } : undefined
-                      }>
-                      {`${name} ${lastname}`}
-                    </Text>
-                  </HStack>
-                )
-              }
-            </NavLink>
+            {
+              <NavLink to={`${id}`}>
+                {
+                  ({ isActive }) => (
+                    <HStack>
+                      <Image src={logo} boxSize="8" />
+                      <Text
+                        style={
+                          isActive ? {
+                            fontWeight: 'bold',
+                            textDecoration: 'underline'
+                          } : undefined
+                        }>
+                        {`${name} ${lastname}`}
+                      </Text>
+                    </HStack>
+                  )
+                }
+              </NavLink>
+            }
           </DataListItem>
         )
       }

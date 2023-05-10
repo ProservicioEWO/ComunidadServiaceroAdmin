@@ -1,3 +1,6 @@
+import Dropzone from 'react-dropzone';
+import useCustomToast from '../../hooks/useCustomToast';
+import useInsertData from '../../hooks/useInsertData';
 import { AddIcon, DownloadIcon } from '@chakra-ui/icons';
 import {
   AlertDialog,
@@ -11,43 +14,76 @@ import {
   FormControl,
   FormErrorMessage,
   HStack,
-  Input, Text,
+  Input,
+  Text,
   useDisclosure,
   VStack
 } from '@chakra-ui/react';
-import { useRef } from 'react';
-import Dropzone from 'react-dropzone';
+import { Location } from '../../models/Location';
+import { useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 
 export interface AddLocationFormValues {
-  id: number
+  id: string
   name: string,
   file: FileList
 }
 
 export interface AddLocationMenuProps {
-  nextId: number
+  nextId: string
+  cityId: number
+  isDisabled?: boolean
+  toData: Location[] | null
 }
 
-const AddLocationMenu = ({ nextId }: AddLocationMenuProps) => {
-  const { handleSubmit, register, reset, formState: { errors, isSubmitting } } = useForm<AddLocationFormValues>({
-    defaultValues:{
-      id: nextId
-    }
-  })
+const AddLocationMenu = ({ nextId, cityId, toData, isDisabled = false }: AddLocationMenuProps) => {
+  const { errorToast, successToast } = useCustomToast()
+  const {
+    error,
+    loading,
+    insertData
+  } = useInsertData<Location>()
+  const {
+    handleSubmit,
+    register,
+    reset,
+    formState: { errors }
+  } = useForm<AddLocationFormValues>()
   const { isOpen, onOpen, onClose } = useDisclosure()
   const cancelRef = useRef(null)
   const formRef = useRef<HTMLFormElement>(null)
-  const handleAddLocation = (data: AddLocationFormValues) => {
-    console.log(data)
+  const handleAddLocation = async ({ name, id }: AddLocationFormValues) => {
+    if (toData) {
+      const newLoc = { id, name, cityId }
+      const ok = await insertData("/locations", newLoc)
+      if (ok) {
+        successToast("Se agregó la nueva instalación con éxito")
+        onClose()
+      }
+    }
   }
   const handleClick = () => {
-    formRef.current?.dispatchEvent(new Event("submit", { cancelable: true, bubbles: true }))
+    formRef.current?.dispatchEvent(new Event("submit", {
+      cancelable: true,
+      bubbles: true
+    }))
   }
+
+  useEffect(() => {
+    if (error) {
+      errorToast("Ocurrió un error insertando la instalación. Por favor, inténtalo más tarde.")
+    }
+
+    reset({
+      id: nextId
+    })
+  }, [nextId, error])
+
   return (
     <>
       <Flex>
         <Button
+          isDisabled={isDisabled}
           onClick={onOpen}
           leftIcon={
             <AddIcon />
@@ -60,19 +96,18 @@ const AddLocationMenu = ({ nextId }: AddLocationMenuProps) => {
       <AlertDialog
         isOpen={isOpen}
         leastDestructiveRef={cancelRef}
-        onClose={onClose}
-      >
+        onClose={onClose}>
         <AlertDialogOverlay>
           <AlertDialogContent>
-            <AlertDialogHeader fontSize='lg' fontWeight='bold'>
+            <AlertDialogHeader fontSize='lg' fontWeight='bold' bg='purple.500' textColor='white' shadow='md'>
               Configuración de instalación
             </AlertDialogHeader>
             <AlertDialogBody>
               <form ref={formRef} onSubmit={handleSubmit(handleAddLocation)}>
                 <VStack align='stretch'>
                   <HStack>
-                    <Text fontSize='sm'>Id</Text>
-                    <Input type='number' readOnly variant='unstyled' {...register("id", { valueAsNumber: true })} />
+                    <Text fontSize='sm' fontWeight='bold'>Id:</Text>
+                    <Input readOnly variant='unstyled' textColor="gray.400" {...register("id")} />
                   </HStack>
                   <FormControl>
                     <Input
@@ -109,14 +144,16 @@ const AddLocationMenu = ({ nextId }: AddLocationMenuProps) => {
               </form>
             </AlertDialogBody>
             <AlertDialogFooter>
-              <Button ref={cancelRef} onClick={() => {
-                onClose()
-                reset()
-              }}>
+              <Button
+                ref={cancelRef}
+                onClick={() => {
+                  onClose()
+                  reset()
+                }}>
                 Cancelar
               </Button>
               <Button
-                isLoading={isSubmitting}
+                isLoading={loading}
                 loadingText="Guardando"
                 colorScheme='purple'
                 onClick={handleClick}

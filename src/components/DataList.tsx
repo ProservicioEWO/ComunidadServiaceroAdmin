@@ -10,6 +10,7 @@ import {
 } from '@chakra-ui/react'
 import { InputChangeEvent } from '../shared/typeAlias'
 import { clamp } from '../shared/utils'
+import { WarningTwoIcon } from '@chakra-ui/icons'
 
 export type DataListItem = typeof DataListItem
 
@@ -19,9 +20,9 @@ export interface DataListOptions {
 }
 
 export interface DataListProps<T> extends Omit<ListProps, 'children'> {
-  list: T[]
+  list: T[] | null
   isLoading: boolean
-  error?: string | null
+  error?: boolean
   searchValue: string
   options?: DataListOptions
   onSearch: (e: InputChangeEvent) => void
@@ -40,7 +41,12 @@ const DataList = <T,>({ list, isLoading, error, searchValue, options, onFilter, 
   }
 
   if (error) {
-    return <Text>{error}</Text>
+    return (
+      <HStack fontSize='2xl'>
+        <WarningTwoIcon/>
+        <Text>Error</Text>
+      </HStack>
+    )
   }
 
   return (
@@ -48,7 +54,6 @@ const DataList = <T,>({ list, isLoading, error, searchValue, options, onFilter, 
       <List {...props} spacing="1" rounded="md">
         {[1, 2, 3, 4, 5].map(e => <Skeleton key={e} startColor="gray.100" endColor="gray.300" p="7" w="full" />)}
       </List> :
-      list &&
       <VStack align="stretch">
         <HStack>
           <InputGroup size="lg">

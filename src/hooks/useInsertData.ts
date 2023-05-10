@@ -3,7 +3,7 @@ import { BASE_URL_API } from "../shared/cs-constants"
 
 const useInsertData = <T>() => {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string|null>(null)
+  const [error, setError] = useState<string | null>(null)
   const insertData = async (endpoint: string, data: T) => {
     setLoading(true)
     try {
@@ -15,19 +15,25 @@ const useInsertData = <T>() => {
         body: JSON.stringify(data)
       })
 
-      if(!response.ok){
+      if (!response.ok) {
         throw new Error("Error al instertar datos")
       }
     } catch (error) {
-      if(error instanceof Error){
-        setError(error.message)
+      if (error instanceof Error) {
+        if (error.message === 'Failed to fetch') {
+          setError('No se pudo conectar al servidor. Por favor, revise su conexión de red.')
+        } else {
+          setError(error.message)
+        }
       }
-    } finally{
+      return false
+    } finally {
       setLoading(false)
     }
+    return true
   }
 
-  return {loading, error, insertData}
+  return { loading, error, insertData }
 }
 
 export default useInsertData

@@ -73,7 +73,10 @@ const DataListItem = (({ children, loading, options, onDelete, ...props }: DataL
                   isLoading={loading}
                   loadingText="Borrando"
                   ml={3}
-                  onClick={onDelete}>
+                  onClick={async ()=>{
+                    await onDelete()
+                    onClose()
+                  }}>
                   Borrar
                 </Button>
               </AlertDialogFooter>

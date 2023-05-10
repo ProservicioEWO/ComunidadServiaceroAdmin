@@ -21,11 +21,17 @@ const useUpdateData = <T>() => {
       }
     } catch (error) {
       if (error instanceof Error) {
-        setError(error.message)
+        if (error.message === 'Failed to fetch') {
+          setError('No se pudo conectar al servidor. Por favor, revise su conexión de red.')
+        } else {
+          setError(error.message)
+        }
       }
+      return false
     } finally {
       setLoading(false)
     }
+    return true
   }
 
   return { loading, error, updateData }

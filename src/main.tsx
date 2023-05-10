@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import App from './App'
 import { ChakraProvider, extendTheme } from '@chakra-ui/react'
 import { BrowserRouter } from 'react-router-dom'
+import AppContextProvider from './contexts/AppContextProvider'
+import AppHeaderContextProvider from './contexts/AppHeaderContextProvider'
 
 const comunidadTheme = extendTheme({
   colors: {
@@ -36,9 +38,13 @@ const comunidadTheme = extendTheme({
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <ChakraProvider theme={comunidadTheme}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+      <AppContextProvider>
+        <AppHeaderContextProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </AppHeaderContextProvider>
+      </AppContextProvider>
     </ChakraProvider>
   </React.StrictMode>,
 )

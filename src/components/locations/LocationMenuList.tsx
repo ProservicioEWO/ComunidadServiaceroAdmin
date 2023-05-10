@@ -14,7 +14,7 @@ import { TiLocation } from 'react-icons/ti';
 export type LocationMenuListItem = typeof LocationMenuListItem
 
 export interface LocationMenuListProps<T> {
-  dataList: T[],
+  dataList: T[] | null,
   isLoading: boolean,
   children: (data: T) => React.ReactElement<LocationMenuListItem>
 }
@@ -34,7 +34,7 @@ const LocationMenuList = <T,>({ dataList, isLoading, children }: LocationMenuLis
           </Flex> :
           <VStack spacing={0} align="stretch">
             {
-              dataList.map((e, i, a) => (
+              dataList?.map((e, i, a) => (
                 <Box key={i} borderBottom={a.length > i + 1 ? BORDER : ""}>
                   {children(e)}
                 </Box>

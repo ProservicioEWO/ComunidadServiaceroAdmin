@@ -1,13 +1,24 @@
 import { VStack, StackDivider, Flex, HStack, Stat, StatLabel, StatNumber } from '@chakra-ui/react'
+import useAppContext from '../../hooks/useAppContext'
+import { User } from '../../models/User'
 import DisplayPassword from '../DisplayPassword'
-import { UserDetail } from './UserDetailView'
 
 export interface UserDetailsProps {
-  data: UserDetail
+  data: User | undefined
 }
 
 const UserDetails = ({ data }: UserDetailsProps) => {
-  const { enterprise: { logo }, user, key, name, lastname, _lastname, title, password } = data
+  const { password } = useAppContext()
+  const {
+    enterprise: { logo },
+    user,
+    key,
+    name,
+    lastname,
+    _lastname,
+    type,
+    entity
+  } = data ?? { enterprise: {} }
   return (
     <VStack align='stretch' divider={<StackDivider />}>
       <Flex justify='center'>
@@ -39,13 +50,17 @@ const UserDetails = ({ data }: UserDetailsProps) => {
       </HStack>
       <HStack align='stretch'>
         <Stat>
-          <StatLabel>Puesto</StatLabel>
-          <StatNumber>{title}</StatNumber>
+          <StatLabel>Entidad</StatLabel>
+          <StatNumber>{entity}</StatNumber>
+        </Stat>
+        <Stat>
+          <StatLabel>Tipo</StatLabel>
+          <StatNumber>{type}</StatNumber>
         </Stat>
         <Stat>
           <StatLabel>Contraseña</StatLabel>
           <StatNumber>
-            <DisplayPassword value={password} />
+            <DisplayPassword value={password.value} isLoading={password.state.loading} />
           </StatNumber>
         </Stat>
       </HStack>

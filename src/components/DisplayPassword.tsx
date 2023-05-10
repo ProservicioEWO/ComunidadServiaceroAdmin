@@ -1,26 +1,36 @@
 import { HStack, IconButton, Input, Tooltip } from "@chakra-ui/react"
 import { ViewIcon, ViewOffIcon } from "@chakra-ui/icons"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 export interface DisplayPasswordProps {
-  value: string
+  value: string | null,
+  isLoading: boolean
 }
 
-const DisplayPassword = ({ value }: DisplayPasswordProps) => {
+const DisplayPassword = ({ value, isLoading }: DisplayPasswordProps) => {
   const [showPassword, setShowPassword] = useState(false)
 
   const toggleShowPassword = () => {
     setShowPassword(!showPassword)
   }
 
+  useEffect(() => {
+    setShowPassword(false)
+  }, [isLoading])
+
   return (
     <HStack>
-      <Input readOnly variant='unstyled' type={showPassword ? 'text' : 'password'} value={value} />
+      <Input
+        readOnly
+        variant='unstyled'
+        type={isLoading ? 'text' : showPassword ? 'text' : 'password'}
+        value={isLoading ? "cargando..." : value ?? ""} />
       <Tooltip hasArrow label={showPassword ? 'ocultar contraseña' : 'mostrar contraseña'}>
         <IconButton
+          isLoading={isLoading}
           icon={
-            showPassword ?
+            !showPassword ?
               <ViewIcon /> :
               <ViewOffIcon />
           }

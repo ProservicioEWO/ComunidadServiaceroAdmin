@@ -1,5 +1,7 @@
-import useFetch from '../../hooks/useFetch';
-import { InfoIcon } from '@chakra-ui/icons';
+import useAppContext from '../../hooks/useAppContext';
+import useCustomToast from '../../hooks/useCustomToast';
+import UserDetails from './UserDetails';
+import UserEditForm from './UserEditForm';
 import {
   Button,
   Card,
@@ -13,18 +15,16 @@ import {
   DrawerHeader,
   DrawerOverlay,
   HStack,
-  Link,
+  IconButton,
   Spacer,
   Spinner,
   Text,
-  useDisclosure,
-  useToast
+  useDisclosure
 } from '@chakra-ui/react';
-import { useEffect, useRef } from 'react';
+import { EditIcon, InfoIcon } from '@chakra-ui/icons';
+import { useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import UserEditForm from './UserEditForm';
-import UserDetails from './UserDetails';
-import ProButton from '../ProButton';
+import { User } from '../../models/User';
 
 export interface UserDetailParams extends Record<string, string> {
   userId: string
@@ -35,57 +35,59 @@ export interface EditUserData {
   name: string
   lastname: string
   _lastname: string
-  title: string
-  enterpriseId: number
-}
-
-export interface UserDetail {
-  key: string
-  name: string
-  lastname: string
-  _lastname: string
-  user: string
-  title: string
-  password: string
-  enterprise:{
-    id: number
-    logo: string
-  }
+  type: string
+  enterpriseId: number,
+  entity: string
 }
 
 const UserDetailView = () => {
-  const toast = useToast()
+  const [currentUser, setCurrentUser] = useState<User | undefined>(undefined)
+  const { errorToast, successToast } = useCustomToast()
+  const { users, password } = useAppContext()
+  const [isLoading, setIsLoading] = useState(false)
   const { userId } = useParams<UserDetailParams>()
-  const {
-    data,
-    loading,
-    error,
-    refresh
-  } = useFetch<UserDetail>("/users/:id?_expand=enterprise", { id: userId })
+  // const {
+  //   data,
+  //   loading,
+  //   error,
+  //   fetchData
+  // } = useFetch<UserDetail>()
   const { isOpen, onOpen, onClose } = useDisclosure()
   const btnRef = useRef<HTMLButtonElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
-  const saveBtnRef = useRef<HTMLButtonElement>(null)
   const handleClick = () => {
-    formRef.current?.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }))
+    formRef.current?.dispatchEvent(new Event('submit', {
+      cancelable: true,
+      bubbles: true
+    }))
+  }
+  const handleSuccess = (newValues: EditUserData) => {
+    //fetchData("/users/:id?_expand=enterprise", { id: userId })
+    if (users.get) {
+      users.set([...users.get.map(e => String(e.id) === userId ? { ...e, ...newValues } : e)])
+      successToast("Se actualizó la información de usuario con éxito")
+      onClose()
+    }
   }
 
   useEffect(() => {
-    refresh()
-    if (error) {
-      toast({
-        title: error,
-        description: "Ocurrió un error obteniendo los detalles de usuario. Por favor, inténtalo más tarde.",
-        position: 'bottom-right',
-        status: 'error',
-        isClosable: true
-      })
+    setCurrentUser(users.get?.find(e => e.id === userId))
+  }, [users.get])
+
+  useEffect(() => {
+    //fetchData("/users/:id?_expand=enterprise", { id: userId })
+    password.fetch(userId)
+  }, [userId])
+
+  useEffect(() => {
+    if (password.state.error) {
+      errorToast(password.state.error)
     }
-  }, [userId, error])
+  }, [password.state.error])
 
   return (
     <>
-      <Card overflow='hidden' w='xl'>
+      <Card overflow='hidden' w='2xl'>
         <CardHeader
           color='white'
           bg='blue.900'>
@@ -94,19 +96,28 @@ const UserDetailView = () => {
             <Text fontWeight='bold' fontSize='xl'>Información</Text>
             <Spacer />
             {
-              !loading &&
-              <Link onClick={onOpen}>Editar</Link>
+              <HStack>
+                {/* <IconButton icon={<RepeatIcon />} colorScheme='whiteAlpha' variant='ghost' onClick={refresh} aria-label={'recargar informacion'} /> */}
+                <IconButton
+                  icon={<EditIcon />}
+                  isDisabled={password.state.loading}
+                  colorScheme='whiteAlpha'
+                  variant='ghost'
+                  onClick={onOpen}
+                  aria-label={'editar usuario'} />
+              </HStack>
             }
           </HStack>
         </CardHeader>
         <CardBody>
           {
-            loading ?
+            users.state.loading ?
               <HStack justify='center'>
                 <Spinner />
               </HStack> :
-              data &&
-              <UserDetails data={data} />
+              users.get &&
+              <UserDetails
+                data={users.get.find(e => e.id === userId)} />
           }
         </CardBody>
       </Card >
@@ -123,20 +134,22 @@ const UserDetailView = () => {
           <DrawerHeader>Editando usuario</DrawerHeader>
           <DrawerBody>
             {
-              data &&
+              currentUser &&
               <UserEditForm
                 userId={userId}
-                saveBtn={saveBtnRef}
+                setIsLoading={setIsLoading}
+                onSuccess={handleSuccess}
                 formRef={formRef}
                 data={{
-                  key: data.key,
-                  name: data.name,
-                  lastname: data.lastname,
-                  _lastname: data._lastname,
-                  enterpriseId: data.enterprise.id,
-                  title: data.title
+                  key: currentUser.key,
+                  name: currentUser.name,
+                  lastname: currentUser.lastname,
+                  _lastname: currentUser._lastname,
+                  enterpriseId: currentUser.enterprise.id,
+                  entity: currentUser.entity,
+                  type: currentUser.type
                 }}
-                user={data.user} />
+                user={currentUser.user} />
             }
           </DrawerBody>
           <DrawerFooter>
@@ -144,7 +157,7 @@ const UserDetailView = () => {
               Cancelar
             </Button>
             <Button
-              ref={saveBtnRef}
+              isLoading={isLoading}
               loadingText="Guardando"
               colorScheme='purple'
               onClick={handleClick}>

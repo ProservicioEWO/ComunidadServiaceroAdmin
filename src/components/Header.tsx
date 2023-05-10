@@ -1,9 +1,18 @@
-import { Card, CardBody, ComponentWithAs, Heading, HStack, Icon, IconProps, Spacer, Text } from '@chakra-ui/react'
-import SignupUser from './SignupUser'
+import SignupUser from './SignupUser';
+import {
+  Card,
+  CardBody,
+  Heading,
+  HStack,
+  Icon,
+  Spacer,
+  Text
+} from '@chakra-ui/react';
+import { SVGComponent } from '../shared/typeAlias';
 
 export interface HeaderProps {
   text: string
-  icon?: ComponentWithAs<"svg", IconProps>
+  icon?: SVGComponent
 }
 
 const Header = ({ icon, text }: HeaderProps) => {
