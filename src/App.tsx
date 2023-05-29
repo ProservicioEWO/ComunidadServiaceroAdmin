@@ -14,6 +14,7 @@ import { CourseDetailView, CourseSectionDetailView } from './components/courses'
 import { useEffect } from 'react';
 import { CSUsers, CSBuilding, CSTeacher, CSGallery, CSCalendar, CSChart } from './icons/CSIcons';
 import useAppHeaderContext from './hooks/useAppHeaderContext';
+import EventsDetailView from './components/gallery/EventsDetailView';
 
 const App = () => {
   const { pathname } = useLocation()
@@ -48,7 +49,9 @@ const App = () => {
             <Route path=':sectionId?' element={<CourseDetailView />} />
           </Route>
         </Route>
-        <Route path='gallery' element={<Gallery />} />
+        <Route path='gallery' element={<Gallery />}>
+          <Route path=':eventId' element={<EventsDetailView/>}/>
+        </Route>
         <Route path='calendar' element={<Calendar />} />
         <Route path='statistics' element={<Statitistics />} />
       </Route>

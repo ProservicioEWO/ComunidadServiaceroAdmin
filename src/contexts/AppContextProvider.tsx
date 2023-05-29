@@ -1,5 +1,6 @@
 import useFetch from '../hooks/useFetch';
 import { City } from '../models/City';
+import { Event } from '../models/Event';
 import {
   createContext,
   Dispatch,
@@ -38,6 +39,11 @@ export interface AppContextValue {
     state: ContextState,
     get: City[] | null,
     set: ContextSetter<City[]>
+  },
+  events: {
+    state: ContextState,
+    get: Event[] | null,
+    set: ContextSetter<Event[]>
   }
 }
 
@@ -61,7 +67,12 @@ export const AppContext = createContext<AppContextValue>({
   cities: {
     state: { loading: false, error: null },
     get: null,
-    set: () =>{}
+    set: () => { }
+  },
+  events: {
+    state: { loading: false, error: null },
+    get: null,
+    set: () => { }
   }
 })
 
@@ -84,8 +95,15 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
     error: citiesError,
     fetchData: fetchCities
   } = useFetch<City[]>()
+  const {
+    data: eventsData,
+    loading: eventsLoading,
+    error: eventsError,
+    fetchData: fetchEvents
+  } = useFetch<Event[]>()
   const [users, setUsers] = useState<User[]>([])
   const [cities, setCities] = useState<City[]>([])
+  const [events, setEvents] = useState<Event[]>([])
   const [password, setPassword] = useState("")
   const value = useMemo<AppContextValue>(() => ({
     get newId() {
@@ -111,6 +129,11 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       state: { loading: citiesLoading, error: citiesError },
       get: cities,
       set: setCities
+    },
+    events: {
+      state: { loading: eventsLoading, error: eventsError },
+      get: events,
+      set: setEvents
     }
   }),
     [
@@ -120,6 +143,9 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       cities,
       citiesLoading,
       citiesError,
+      events,
+      eventsLoading,
+      eventsError,
       password,
       passwordLoading,
       passwordError
@@ -127,10 +153,9 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     fetchUsers("/users?_expand=enterprise")
-  }, [])
-
-  useEffect(() => {
     fetchCities("/cities")
+    fetchCities("/events")
+    fetchEvents("/events")
   }, [])
 
   useEffect(() => {
@@ -144,6 +169,12 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setCities(citiesData)
     }
   }, [citiesData])
+
+  useEffect(() => {
+    if (eventsData) {
+      setEvents(eventsData)
+    }
+  }, [eventsData])
 
   useEffect(() => {
     if (userPassword) {

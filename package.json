@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.341.0",
     "@chakra-ui/icons": "^2.0.18",
     "@chakra-ui/react": "^2.5.1",
     "@emotion/react": "^11.10.6",
@@ -16,6 +17,7 @@
     "@loadable/component": "^5.15.3",
     "@types/loadable__component": "^5.13.4",
     "@types/uuid": "^9.0.1",
+    "aws-sdk": "^2.1386.0",
     "framer-motion": "^10.2.4",
     "localforage": "^1.10.0",
     "match-sorter": "^6.3.1",
