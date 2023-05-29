@@ -1,13 +1,23 @@
-import { AddIcon } from '@chakra-ui/icons'
-import { Button, Card, CardBody, FormControl, Icon, Image, Input, List, ListItem, VStack } from '@chakra-ui/react'
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import AWS from 'aws-sdk'
-import { ListObjectsCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import CustomFileInput from '../CustromFileInput'
-import useAppContext from '../../hooks/useAppContext'
-import useCustomToast from '../../hooks/useCustomToast'
-import { BASE_URL_IMG } from '../../shared/cs-constants'
+import CustomFileInput from '../CustromFileInput';
+import useAppContext from '../../hooks/useAppContext';
+import useCustomToast from '../../hooks/useCustomToast';
+import { AddIcon, DeleteIcon } from '@chakra-ui/icons';
+import { BASE_URL_IMG } from '../../shared/cs-constants';
+import {
+  Text,
+  Card,
+  CardBody,
+  Divider,
+  FormControl,
+  Image,
+  SimpleGrid,
+  VStack,
+  Icon
+} from '@chakra-ui/react';
+import { DeleteObjectCommand, ListObjectsCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import ImageThumbnail from './ImageThumbnail';
 
 const s3Client = new S3Client({
   region: 'us-east-1',
@@ -23,24 +33,59 @@ export interface EventParams extends Record<string, string> {
   eventId: string
 }
 
-async function uploadImageToS3(file: File, dir: string): Promise<string> {
-  const command = new PutObjectCommand({
-    Bucket: 'cs-resources',
-    Key: `events/${dir}/${file.name}`,
-    Body: file,
-    ACL: 'public-read'
-  });
+export interface UploadImageResult {
+  filename: string
+  success: boolean
+  error?: Error
+}
 
+async function uploadImagesToS3(files: FileList, dir: string): Promise<UploadImageResult[]> {
   try {
-    await s3Client.send(command);
-    const imageUrl = `http://localhost:4566/cs-resources/events/${dir}/${file.name}`;
-    return imageUrl;
+    const uploadPromises = [...files].map(async file => {
+      const result: UploadImageResult = {
+        filename: file.name,
+        success: false
+      }
+
+      const command = new PutObjectCommand({
+        Bucket: 'cs-resources',
+        Key: `events/${dir}/${file.name}`,
+        Body: file,
+        ACL: 'public-read'
+      })
+
+      try {
+        await s3Client.send(command);
+        result.success = true
+      } catch (error) {
+        if (error instanceof Error) {
+          result.error = error
+        }
+      }
+      return result
+    })
+    const uploadResults = await Promise.all(uploadPromises)
+    return uploadResults
   } catch (error) {
-    throw new Error(`Error al cargar la imagen. ${error}`);
+    throw new Error(`Error al subir las imágenes. ${error}`)
   }
 }
 
-async function fetchImagesFromS3(path: string): Promise<string[]> {
+async function deleteImageFromS3(imageKey: string): Promise<boolean> {
+  const command = new DeleteObjectCommand({
+    Bucket: 'cs-resources',
+    Key: imageKey
+  })
+
+  try {
+    await s3Client.send(command)
+    return true
+  } catch (error) {
+    return false
+  }
+}
+
+async function fetchImagesFromS3(path: string): Promise<string[] | null> {
   const command = new ListObjectsCommand({
     Bucket: 'cs-resources',
     Prefix: path,
@@ -51,9 +96,9 @@ async function fetchImagesFromS3(path: string): Promise<string[]> {
     if (response.Contents) {
       return response.Contents.map(objeto => objeto.Key ?? "");
     }
-    return [];
+    return []
   } catch (error) {
-    throw new Error(`Error al obtener los objetos de S3. ${error}`);
+    return null
   }
 }
 
@@ -63,11 +108,22 @@ const EventsDetailView = () => {
   const { eventId } = useParams<EventParams>()
   const [images, setImages] = useState<string[]>([])
 
-  const handleFileChange = async (file: File) => {
+  const handleFileChange = async (files: FileList) => {
     if (eventId) {
       try {
-        const fileURL = await uploadImageToS3(file, eventId)
-        successToast(`Se cargo correctamente la imagen con ruta. ${fileURL}`)
+        const uploadResults = await uploadImagesToS3(files, eventId)
+        const imagesWithError = uploadResults.filter(result => !result.success)
+        if (imagesWithError.length > 0) {
+          const fileList = imagesWithError.map(e => `${e.filename}\n`)
+          errorToast(`Las siguientes imagenes no se subieron correctamente.:\n${fileList}`)
+        } else {
+          const images = await fetchImagesFromS3(`events/${eventId}`)
+          if (images) {
+            setImages(images)
+          }
+          successToast("Las imágenes se cargaron con éxito.")
+        }
+
       } catch (error) {
         if (error instanceof Error) {
           errorToast(error.message)
@@ -76,12 +132,27 @@ const EventsDetailView = () => {
     }
   }
 
+  const handleDelete = async (imageKey: string) => {
+    const ok = await deleteImageFromS3(imageKey)
+    if (ok) {
+      const images = await fetchImagesFromS3(`events/${eventId}`)
+      if (images) {
+        setImages(images)
+      }
+      successToast("Se eliminó la imagen con éxito.")
+    } else {
+      errorToast("Hubó un error al momento de eliminar la imagen.")
+    }
+  }
+
   useEffect(() => {
     (async () => {
       const images = await fetchImagesFromS3(`events/${eventId}`)
-      setImages(images)
+      if (images) {
+        setImages(images)
+      }
     })()
-  }, [])
+  }, [eventId])
 
   return (
     <Card w="full">
@@ -94,13 +165,24 @@ const EventsDetailView = () => {
               text="Agregar imagenes"
               onChange={handleFileChange} />
           </FormControl>
-          <VStack>
-            {
-              images.map((e, i) => (
-                <Image key={i} src={`${BASE_URL_IMG}/${e}`} />
-              ))
-            }
-          </VStack>
+          <Divider />
+          {
+            images.length ?
+              <SimpleGrid w="full" columns={4} spacing={4}>
+                {
+                  images.map((e, i) => (
+                    <ImageThumbnail
+                      key={i}
+                      description={e.split("/").pop() ?? ""}
+                      src={`${BASE_URL_IMG}/${e}`}
+                      onDelete={async () => {
+                        await handleDelete(e)
+                      }} />
+                  ))
+                }
+              </SimpleGrid> :
+              <Text>Agrega imágenes al evento.</Text>
+          }
         </VStack>
       </CardBody>
     </Card>

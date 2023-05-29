@@ -154,7 +154,6 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     fetchUsers("/users?_expand=enterprise")
     fetchCities("/cities")
-    fetchCities("/events")
     fetchEvents("/events")
   }, [])
 

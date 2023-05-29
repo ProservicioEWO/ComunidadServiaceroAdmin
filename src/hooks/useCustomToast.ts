@@ -20,7 +20,7 @@ const useCustomToast = (): CustomToastContext => {
         description,
         position,
         isClosable: true,
-        status: type,
+        status: type
       });
     }, [toast])
 

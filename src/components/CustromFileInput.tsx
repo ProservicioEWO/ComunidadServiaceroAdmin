@@ -7,20 +7,20 @@ interface CustomFileInputProps {
   text: string
   icon: SVGComponent
   isDisabled?: boolean
-  onChange: (file: File) => void
+  onChange: (file: FileList) => void
 }
 
 const CustomFileInput = ({ text, icon, onChange, isDisabled = false }: CustomFileInputProps) => {
   const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      onChange(file)
+    const files = event.target.files
+    if (files) {
+      onChange(files)
     }
   }
 
   return (
     <FormControl>
-      <Input id='file-input' type="file" onChange={handleInputChange} display="none" />
+      <Input id='file-input' type="file" onChange={handleInputChange} display="none" multiple />
       <Button as="label" htmlFor="file-input" role='button' isDisabled={isDisabled}>
         <HStack>
           <Icon as={icon} />

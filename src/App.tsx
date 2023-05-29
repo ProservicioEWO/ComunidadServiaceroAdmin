@@ -15,6 +15,8 @@ import { useEffect } from 'react';
 import { CSUsers, CSBuilding, CSTeacher, CSGallery, CSCalendar, CSChart } from './icons/CSIcons';
 import useAppHeaderContext from './hooks/useAppHeaderContext';
 import EventsDetailView from './components/gallery/EventsDetailView';
+import { Text } from '@chakra-ui/react';
+import GalleryIndex from './components/gallery/GalleryIndex';
 
 const App = () => {
   const { pathname } = useLocation()
@@ -50,7 +52,8 @@ const App = () => {
           </Route>
         </Route>
         <Route path='gallery' element={<Gallery />}>
-          <Route path=':eventId' element={<EventsDetailView/>}/>
+          <Route index element={<GalleryIndex />} />
+          <Route path=':eventId' element={<EventsDetailView />} />
         </Route>
         <Route path='calendar' element={<Calendar />} />
         <Route path='statistics' element={<Statitistics />} />

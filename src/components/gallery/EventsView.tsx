@@ -11,11 +11,12 @@ import { NewLocationValue } from '../locations/AddLocationForm';
 import { useEffect } from 'react';
 import { VStack } from '@chakra-ui/react';
 import AddEventForm, { NewEventValue } from './AddEventForm';
+import { EventParams } from './EventsDetailView';
 
 const EventsView = () => {
   const navigate = useNavigate()
   const { newId, events } = useAppContext()
-  const { cityId } = useParams<LocationParams>()
+  const { eventId } = useParams<EventParams>()
   const { errorToast, successToast } = useCustomToast()
   const { deleteData, loading: deleting, error: deleteError } = useDeleteData()
   const { insertData, loading: inserting, error: insertError } = useInsertData<Event>()
@@ -23,11 +24,11 @@ const EventsView = () => {
   const handleDelete = async (id: string | number) => {
     const ok = await deleteData("/events", id)
     if (ok) {
-      successToast("Se eliminó ciudad con éxito")
+      successToast("Se el evento con éxito")
       const newDatalist = events.get?.filter(e => e.id !== id)
       events.set(newDatalist ?? [])
-      if (cityId && String(id) === cityId) {
-        navigate(`/admin/locations`)
+      if (eventId && String(id) === eventId) {
+        navigate(`/admin/gallery`)
       }
     }
   }

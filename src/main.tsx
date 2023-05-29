@@ -21,16 +21,16 @@ const comunidadTheme = extendTheme({
       900: "#0E1925"
     },
     cream: {
-      "50": "#FFFCFA",
-      "100": "#FFF6F2",
-      "200": "#FFEFE9",
-      "300": "#FFE9E0",
-      "400": "#FFE2D7",
-      "500": "#FFDCCE",
-      "600": "#FFD5C5",
-      "700": "#FFCEBC",
-      "800": "#FFC7B3",
-      "900": "#FFBFAA"
+      50: "#FFFCFA",
+      100: "#FFF6F2",
+      200: "#FFEFE9",
+      300: "#FFE9E0",
+      400: "#FFE2D7",
+      500: "#FFDCCE",
+      600: "#FFD5C5",
+      700: "#FFCEBC",
+      800: "#FFC7B3",
+      900: "#FFBFAA"
     }
   }
 })

@@ -70,8 +70,8 @@ const AddEventForm = ({ onAdd, isLoading }: AddEventFormProps) => {
               <InputGroup variant='flushed'>
                 <FormControl isInvalid={!!errors.name}>
                   <Input
-                    autoComplete='off'
                     _focus={{ bg: "gray.50" }}
+                    autoComplete='off'
                     focusBorderColor='transparent'
                     border='none'
                     {...register("name", { required: true })}
