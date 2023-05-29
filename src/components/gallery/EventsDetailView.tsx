@@ -1,12 +1,13 @@
 import { AddIcon } from '@chakra-ui/icons'
-import { Button, Card, CardBody, FormControl, Icon, Input } from '@chakra-ui/react'
+import { Button, Card, CardBody, FormControl, Icon, Image, Input, List, ListItem, VStack } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import AWS from 'aws-sdk'
-import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
+import { ListObjectsCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import CustomFileInput from '../CustromFileInput'
 import useAppContext from '../../hooks/useAppContext'
 import useCustomToast from '../../hooks/useCustomToast'
+import { BASE_URL_IMG } from '../../shared/cs-constants'
 
 const s3Client = new S3Client({
   region: 'us-east-1',
@@ -39,15 +40,28 @@ async function uploadImageToS3(file: File, dir: string): Promise<string> {
   }
 }
 
-async function fetchImagesFromS3(path: string) {
-  
+async function fetchImagesFromS3(path: string): Promise<string[]> {
+  const command = new ListObjectsCommand({
+    Bucket: 'cs-resources',
+    Prefix: path,
+  });
+
+  try {
+    const response = await s3Client.send(command);
+    if (response.Contents) {
+      return response.Contents.map(objeto => objeto.Key ?? "");
+    }
+    return [];
+  } catch (error) {
+    throw new Error(`Error al obtener los objetos de S3. ${error}`);
+  }
 }
 
 const EventsDetailView = () => {
   const { events } = useAppContext()
   const { errorToast, successToast } = useCustomToast()
   const { eventId } = useParams<EventParams>()
-  const [text, setText] = useState("")
+  const [images, setImages] = useState<string[]>([])
 
   const handleFileChange = async (file: File) => {
     if (eventId) {
@@ -63,21 +77,31 @@ const EventsDetailView = () => {
   }
 
   useEffect(() => {
-    if (eventId) {
-      setText(eventId)
-    }
-  }, [eventId])
+    (async () => {
+      const images = await fetchImagesFromS3(`events/${eventId}`)
+      setImages(images)
+    })()
+  }, [])
 
   return (
     <Card w="full">
       <CardBody>
-        <FormControl>
-          <CustomFileInput
-            isDisabled={events.state.loading}
-            icon={AddIcon}
-            text="Agregar imagenes"
-            onChange={handleFileChange} />
-        </FormControl>
+        <VStack>
+          <FormControl>
+            <CustomFileInput
+              isDisabled={events.state.loading}
+              icon={AddIcon}
+              text="Agregar imagenes"
+              onChange={handleFileChange} />
+          </FormControl>
+          <VStack>
+            {
+              images.map((e, i) => (
+                <Image key={i} src={`${BASE_URL_IMG}/${e}`} />
+              ))
+            }
+          </VStack>
+        </VStack>
       </CardBody>
     </Card>
   )
