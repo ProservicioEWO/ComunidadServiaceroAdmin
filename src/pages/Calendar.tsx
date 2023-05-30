@@ -1,20 +1,22 @@
-import { Calendar as CalendarReact, momentLocalizer } from 'react-big-calendar'
-import moment from 'moment'
-
-const localizer = momentLocalizer(moment)
+import dayGridPlugin from '@fullcalendar/daygrid';
+import FullCalendar from '@fullcalendar/react';
+import moment from 'moment';
+import ProgramCalendar from '../components/calendar/ProgramCalendar';
+import useAppContext from '../hooks/useAppContext';
 
 const Calendar = () => {
+  const { programs } = useAppContext()
+  const programList = programs.get?.map(e => ({
+    title: e.name,
+    start: e.date,
+    end: moment(e.date).add(e.duration, 'weeks').format('YYYY-MM-DD'),
+    color: e.color
+  }))
 
   return (
-    <CalendarReact
-      localizer={localizer}
-      events={[
-        {start: '2023-05-01', end: '2023-05-12'}
-      ]}
-      startAccessor="start"
-      endAccessor="end"
-      style={{ height: 500 }}
-    />
+    <ProgramCalendar
+      programList={programList}
+      isLoading={programs.state.loading} />
   )
 }
 

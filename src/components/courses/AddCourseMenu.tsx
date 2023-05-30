@@ -1,7 +1,7 @@
 import useCustomToast from '../../hooks/useCustomToast';
 import useInsertData from '../../hooks/useInsertData';
 import { AddIcon } from '@chakra-ui/icons';
-import { AddLocationFormValues } from './AddLocationMenu';
+import { AddLocationFormValues } from '../locations/AddLocationMenu';
 import {
   AlertDialog,
   AlertDialogBody,
@@ -18,7 +18,7 @@ import {
   Text,
   useDisclosure
 } from '@chakra-ui/react';
-import { Course } from '../../models/Course';
+import { Program } from '../../models/Program';
 import { useForm } from 'react-hook-form';
 import { useRef } from 'react';
 
@@ -31,7 +31,7 @@ const AddCourseMenu = ({ isDisabled = false }: AddCourseMenuProps) => {
     error,
     loading,
     insertData
-  } = useInsertData<Course>()
+  } = useInsertData<Program>()
   const {
     handleSubmit,
     register,

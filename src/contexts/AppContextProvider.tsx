@@ -14,6 +14,7 @@ import { Location } from '../models/Location';
 import { NIL as NIL_UUID, v4 as uuidv4, v5 as uuidv5 } from 'uuid';
 import { User } from '../models/User';
 import { UUID } from '../shared/typeAlias';
+import { Program } from '../models/Program';
 
 type ContextState = { loading: boolean, error: string | null }
 type ContextSetter<T> = Dispatch<SetStateAction<T>>
@@ -44,6 +45,11 @@ export interface AppContextValue {
     state: ContextState,
     get: Event[] | null,
     set: ContextSetter<Event[]>
+  },
+  programs: {
+    state: ContextState,
+    get: Program[] | null,
+    set: ContextSetter<Program[]>
   }
 }
 
@@ -70,6 +76,11 @@ export const AppContext = createContext<AppContextValue>({
     set: () => { }
   },
   events: {
+    state: { loading: false, error: null },
+    get: null,
+    set: () => { }
+  },
+  programs: {
     state: { loading: false, error: null },
     get: null,
     set: () => { }
@@ -101,9 +112,16 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
     error: eventsError,
     fetchData: fetchEvents
   } = useFetch<Event[]>()
+  const {
+    data: programsData,
+    loading: programsLoading,
+    error: programsError,
+    fetchData: fetchPrograms
+  } = useFetch<Program[]>()
   const [users, setUsers] = useState<User[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [events, setEvents] = useState<Event[]>([])
+  const [programs, setPrograms] = useState<Program[]>([])
   const [password, setPassword] = useState("")
   const value = useMemo<AppContextValue>(() => ({
     get newId() {
@@ -134,6 +152,11 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       state: { loading: eventsLoading, error: eventsError },
       get: events,
       set: setEvents
+    },
+    programs: {
+      state: { loading: programsLoading, error: programsError },
+      get: programs,
+      set: setPrograms
     }
   }),
     [
@@ -146,6 +169,9 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       events,
       eventsLoading,
       eventsError,
+      programs,
+      programsLoading,
+      programsError,
       password,
       passwordLoading,
       passwordError
@@ -155,6 +181,7 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
     fetchUsers("/users?_expand=enterprise")
     fetchCities("/cities")
     fetchEvents("/events")
+    fetchPrograms("/programs")
   }, [])
 
   useEffect(() => {
@@ -174,6 +201,12 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setEvents(eventsData)
     }
   }, [eventsData])
+
+  useEffect(() => {
+    if (programsData) {
+      setPrograms(programsData)
+    }
+  }, [programsData])
 
   useEffect(() => {
     if (userPassword) {
