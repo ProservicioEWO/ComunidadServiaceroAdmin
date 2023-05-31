@@ -1,3 +1,4 @@
+import AddEventForm, { NewEventValue } from './AddEventForm';
 import EventsMenuList from './EventsMenuList';
 import EventsMenuListItem from './EventsMenuListItem';
 import useAppContext from '../../hooks/useAppContext';
@@ -5,13 +6,10 @@ import useCustomToast from '../../hooks/useCustomToast';
 import useDeleteData from '../../hooks/useDelete';
 import useInsertData from '../../hooks/useInsertData';
 import { Event } from '../../models/Event';
-import { LocationParams } from '../locations/LocationDetailView';
+import { EventParams } from './EventsDetailView';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
-import { NewLocationValue } from '../locations/AddLocationForm';
 import { useEffect } from 'react';
 import { VStack } from '@chakra-ui/react';
-import AddEventForm, { NewEventValue } from './AddEventForm';
-import { EventParams } from './EventsDetailView';
 
 const EventsView = () => {
   const navigate = useNavigate()

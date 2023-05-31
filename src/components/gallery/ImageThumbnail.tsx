@@ -31,14 +31,22 @@ import { useRef } from 'react';
 export interface ImageThumbnailProps {
   src: string,
   description: string
-  onDelete: () => void
+  onDelete: () => Promise<void>
 }
 
 const ImageThumbnail = ({ src, description, onDelete }: ImageThumbnailProps) => {
+  const [isDeleting, setIsDeleting] = useBoolean()
   const [isHover, setIsHover] = useBoolean()
   const { isOpen, onOpen, onClose } = useDisclosure()
-  const { isOpen: isOpenModal, onOpen: onOpenModal, onClose: onCloseModal } = useDisclosure()
+  const { isOpen: isOpenM, onOpen: onOpenM, onClose: onCloseM } = useDisclosure()
   const cancelRef = useRef<HTMLButtonElement>(null)
+
+  const handleDeleteOnClick = async () => {
+    setIsDeleting.on()
+    await onDelete()
+    setIsDeleting.off()
+    onClose()
+  }
 
   return (
     <>
@@ -63,7 +71,7 @@ const ImageThumbnail = ({ src, description, onDelete }: ImageThumbnailProps) => 
                 icon={<Icon as={AiOutlineZoomIn} boxSize="40px" />}
                 variant='unstyled'
                 aria-label='zoom'
-                onClick={onOpenModal} />
+                onClick={onOpenM} />
               <IconButton
                 color="red.500"
                 icon={<Icon as={DeleteIcon} boxSize="40px" />}
@@ -96,12 +104,9 @@ const ImageThumbnail = ({ src, description, onDelete }: ImageThumbnailProps) => 
               <Button ref={cancelRef} onClick={onClose}>Cancelar</Button>
               <Button
                 colorScheme='red'
-                isLoading={false}
+                isLoading={isDeleting}
                 loadingText="Borrando"
-                onClick={() => {
-                  onDelete()
-                  onClose()
-                }}
+                onClick={handleDeleteOnClick}
                 ml={3}>
                 Borrar
               </Button>
@@ -109,7 +114,7 @@ const ImageThumbnail = ({ src, description, onDelete }: ImageThumbnailProps) => 
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-      <Modal size='6xl' isOpen={isOpenModal} onClose={onCloseModal}>
+      <Modal size='6xl' isOpen={isOpenM} onClose={onCloseM}>
         <ModalOverlay />
         <ModalContent>
           <ModalBody p={1}>
@@ -119,7 +124,7 @@ const ImageThumbnail = ({ src, description, onDelete }: ImageThumbnailProps) => 
           </ModalBody>
           <ModalFooter>
             <Text w="full">{description}</Text>
-            <Button onClick={onCloseModal}>Cerrar</Button>
+            <Button onClick={onCloseM}>Cerrar</Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
