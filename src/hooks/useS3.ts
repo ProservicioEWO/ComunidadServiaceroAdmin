@@ -23,7 +23,7 @@ export interface UploadImageError {
 
 export interface ImageListState {
   loading: boolean
-  data?: string[]
+  data: string[] | null
   error?: Error
 }
 
@@ -45,6 +45,7 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
     imageListState,
     setImageListState
   ] = useState<ImageListState>({
+    data: null,
     loading: false
   })
   const [
@@ -63,7 +64,7 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
   })
 
   const fetchImages = async () => {
-    setImageListState({ loading: true })
+    setImageListState({ loading: true, data: null })
     try {
       const command = new ListObjectsV2Command({
         Bucket: bucket,
@@ -73,12 +74,13 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
       const response = await s3Client.send(command);
       setImageListState({
         loading: false,
-        data: response.Contents?.map(objeto => objeto.Key ?? "")
+        data: response.Contents?.map(objeto => objeto.Key ?? "") ?? null
       })
     } catch (error) {
       if (error instanceof Error) {
         setImageListState({
           loading: false,
+          data: null,
           error
         })
       }
@@ -88,6 +90,11 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
   const uploadImages = async (files: FileList) => {
     const uploadedImages: string[] = []
     const failedImages: UploadImageError[] = []
+    setUploadImageState({
+      loading: true, 
+      uploadedImages, 
+      failedImages
+    })
     try {
       for (const file of files) {
         try {

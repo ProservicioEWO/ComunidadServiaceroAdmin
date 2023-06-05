@@ -42,7 +42,7 @@ const AddEventForm = ({ onAdd, isLoading }: AddEventFormProps) => {
     <Popover isLazy isOpen={isOpen} onClose={onClose}>
       <PopoverTrigger>
         <Box>
-          <Tooltip hasArrow placement='right' label="Agregar ciudad">
+          <Tooltip hasArrow placement='right' label="Agregar evento">
             <IconButton
               onClick={onToggle}
               size="sm"

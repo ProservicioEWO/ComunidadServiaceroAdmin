@@ -1,4 +1,4 @@
-import { AiOutlineZoomIn } from 'react-icons/ai'
+import { AiOutlineZoomIn } from 'react-icons/ai';
 import {
   AlertDialog,
   AlertDialogBody,
@@ -8,7 +8,7 @@ import {
   AlertDialogOverlay,
   Box,
   Button,
-  Text,
+  Center,
   Fade,
   HStack,
   Icon,
@@ -16,16 +16,14 @@ import {
   Image,
   Modal,
   ModalBody,
-  ModalCloseButton,
   ModalContent,
   ModalFooter,
-  ModalHeader,
   ModalOverlay,
+  Text,
   useBoolean,
-  useDisclosure,
-  Center
-} from '@chakra-ui/react'
-import { CloseIcon, DeleteIcon } from '@chakra-ui/icons'
+  useDisclosure
+} from '@chakra-ui/react';
+import { DeleteIcon } from '@chakra-ui/icons';
 import { useRef } from 'react';
 
 export interface ImageThumbnailProps {
@@ -54,6 +52,8 @@ const ImageThumbnail = ({ src, description, onDelete }: ImageThumbnailProps) => 
         shadow="md"
         overflow="hidden"
         position="relative"
+        borderWidth={10}
+        borderColor="white"
         style={{ aspectRatio: 1 }}
         onMouseEnter={setIsHover.on}
         onMouseLeave={setIsHover.off}>
@@ -81,7 +81,10 @@ const ImageThumbnail = ({ src, description, onDelete }: ImageThumbnailProps) => 
             </HStack>
           </Box>
         </Fade>
-        <Image src={src} objectFit="cover" h="full" w="full" />
+        <Image
+          src={src}
+          objectFit="cover"
+          boxSize="full" />
       </Box>
       <AlertDialog
         isOpen={isOpen}
@@ -103,7 +106,7 @@ const ImageThumbnail = ({ src, description, onDelete }: ImageThumbnailProps) => 
             <AlertDialogFooter>
               <Button ref={cancelRef} onClick={onClose}>Cancelar</Button>
               <Button
-                colorScheme='red'
+                colorScheme="red"
                 isLoading={isDeleting}
                 loadingText="Borrando"
                 onClick={handleDeleteOnClick}
@@ -114,7 +117,7 @@ const ImageThumbnail = ({ src, description, onDelete }: ImageThumbnailProps) => 
           </AlertDialogContent>
         </AlertDialogOverlay>
       </AlertDialog>
-      <Modal size='6xl' isOpen={isOpenM} onClose={onCloseM}>
+      <Modal size="6xl" isOpen={isOpenM} onClose={onCloseM}>
         <ModalOverlay />
         <ModalContent>
           <ModalBody p={1}>

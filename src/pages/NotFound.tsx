@@ -17,7 +17,7 @@ const NotFound = () => {
       <Box textAlign="center">
         <HStack>
           <Heading as="h1" m="0 auto" size="4xl">
-            <CSPuzzleIcon color="gray.400" />
+            <CSPuzzleIcon color="red.400" />
             <Text>404</Text>
           </Heading>
         </HStack>

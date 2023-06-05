@@ -1,4 +1,4 @@
-import CustomFileInput from '../CustromFileInput';
+import CustomFileInput from '../CustomFileInput';
 import useAppContext from '../../hooks/useAppContext';
 import useCustomToast from '../../hooks/useCustomToast';
 import { AddIcon } from '@chakra-ui/icons';
@@ -11,12 +11,15 @@ import {
   FormControl,
   SimpleGrid,
   VStack,
-  Box
+  Box,
+  Fade,
+  Spinner
 } from '@chakra-ui/react';
 import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import ImageThumbnail from './ImageThumbnail';
 import useS3 from '../../hooks/useS3';
+import GalleryGrid from './GalleryGrid';
 
 export interface EventParams extends Record<string, string> {
   eventId: string
@@ -99,26 +102,37 @@ const EventsDetailView = () => {
               }} />
           </FormControl>
           <Divider />
-          <Box>
-            {
-              imageListState.loading ?
-                <Text>Cargado...</Text> :
-                imageListState.data ?
-                  <SimpleGrid w="full" columns={4} spacing={4}>
-                    {
-                      imageListState.data.map((e, i) => (
-                        <ImageThumbnail
-                          key={i}
-                          description={e.split("/").pop() ?? ""}
-                          src={`${BASE_URL_IMG}/${e}`}
-                          onDelete={async () => {
-                            await handleDelete(e)
-                          }} />
-                      ))
-                    }
-                  </SimpleGrid> :
-                  <Text>Agrega imágenes al evento.</Text>
-            }
+          <Box position="relative">
+            <Fade in={uploadImageState.loading}>
+              <Box
+                boxSize="full"
+                position="absolute"
+                bg="blackAlpha.600"
+                color="white"
+                zIndex="99">
+                <VStack gap="10px">
+                  <Spinner />
+                  <Text>Subiendo imágenes</Text>
+                </VStack>
+              </Box>
+            </Fade>
+            <GalleryGrid<string>
+              isLoading={imageListState.loading}
+              list={imageListState.data}
+              emptyMessage="Agrega imágenes al evento."
+              mapName={key => key.split("/").pop() ?? ""}
+            >
+              {
+                (key, name) => (
+                  <ImageThumbnail
+                    description={name ?? ""}
+                    src={`${BASE_URL_IMG}/${key}`}
+                    onDelete={async () => {
+                      await handleDelete(key)
+                    }} />
+                )
+              }
+            </GalleryGrid>
           </Box>
         </VStack>
       </CardBody>
