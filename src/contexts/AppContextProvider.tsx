@@ -15,37 +15,39 @@ import { NIL as NIL_UUID, v4 as uuidv4, v5 as uuidv5 } from 'uuid';
 import { User } from '../models/User';
 import { UUID } from '../shared/typeAlias';
 import { Program } from '../models/Program';
+import Loading from '../pages/Loading';
 
 type ContextState = { loading: boolean, error: string | null }
 type ContextSetter<T> = Dispatch<SetStateAction<T>>
 
 export interface AppContextValue {
-  readonly newId: UUID,
+  readonly newId: UUID
+  readonly starting: boolean
   users: {
     state: ContextState
     get: User[] | null,
     set: ContextSetter<User[]>
-  },
+  }
   password: {
     state: ContextState,
     readonly value: string | null,
     fetch: (id?: string) => Promise<void>
-  },
+  }
   locations: {
     state: ContextState
     fetch: (cityId?: string) => Promise<void>,
     list: Location[] | null
-  },
+  }
   cities: {
     state: ContextState,
     get: City[] | null,
     set: ContextSetter<City[]>
-  },
+  }
   events: {
     state: ContextState,
     get: Event[] | null,
     set: ContextSetter<Event[]>
-  },
+  }
   programs: {
     state: ContextState,
     get: Program[] | null,
@@ -55,6 +57,7 @@ export interface AppContextValue {
 
 export const AppContext = createContext<AppContextValue>({
   get newId() { return NIL_UUID },
+  get starting() { return false },
   users: {
     state: { loading: false, error: null },
     get: null,
@@ -124,6 +127,12 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [programs, setPrograms] = useState<Program[]>([])
   const [password, setPassword] = useState("")
   const value = useMemo<AppContextValue>(() => ({
+    get starting() {
+      return citiesLoading ||
+        usersLoading ||
+        eventsLoading ||
+        programsLoading
+    },
     get newId() {
       //const nid = this.get?.map(e => e.id)[Math.floor(Math.random() * (100))] ?? NIL_UUID
       return uuidv4()

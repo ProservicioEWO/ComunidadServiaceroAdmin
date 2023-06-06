@@ -6,6 +6,7 @@ const useAppContext = () => {
   if(!appContext){
     throw new Error("appContext must be used wthin an AppContextProvider")
   }
+
   return appContext
 }
 

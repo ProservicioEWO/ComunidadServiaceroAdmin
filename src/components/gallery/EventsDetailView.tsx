@@ -103,19 +103,19 @@ const EventsDetailView = () => {
           </FormControl>
           <Divider />
           <Box position="relative">
-            <Fade in={uploadImageState.loading}>
-              <Box
-                boxSize="full"
-                position="absolute"
-                bg="blackAlpha.600"
-                color="white"
-                zIndex="99">
-                <VStack gap="10px">
-                  <Spinner />
-                  <Text>Subiendo imágenes</Text>
-                </VStack>
-              </Box>
-            </Fade>
+            <Box
+              display={uploadImageState.loading ? "block" : "none"}
+              w="full"
+              position="absolute"
+              bg="blackAlpha.600"
+              color="white"
+              zIndex="99"
+              style={{ aspectRatio: 1 }}>
+              <VStack gap="10px">
+                <Spinner />
+                <Text>Subiendo imágenes</Text>
+              </VStack>
+            </Box>
             <GalleryGrid<string>
               isLoading={imageListState.loading}
               list={imageListState.data}
@@ -123,8 +123,9 @@ const EventsDetailView = () => {
               mapName={key => key.split("/").pop() ?? ""}
             >
               {
-                (key, name) => (
+                (key, name, index) => (
                   <ImageThumbnail
+                    key={index}
                     description={name ?? ""}
                     src={`${BASE_URL_IMG}/${key}`}
                     onDelete={async () => {

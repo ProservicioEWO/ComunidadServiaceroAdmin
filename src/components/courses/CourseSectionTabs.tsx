@@ -15,7 +15,7 @@ const CourseSectionTabs = () => {
               <Box
                 borderBottom={isActive ? '4px' : '0'}
                 borderColor='blue.400' pb='1'>
-                <Image src={`${BASE_URL_IMG}/course${i}.png`} />
+                <Image src={`${BASE_URL_IMG}/courses-sections/course${i}.png`} />
               </Box>
             )
           }

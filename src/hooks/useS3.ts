@@ -1,5 +1,6 @@
 import {
   DeleteObjectCommand,
+  DeleteObjectsCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
@@ -91,8 +92,8 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
     const uploadedImages: string[] = []
     const failedImages: UploadImageError[] = []
     setUploadImageState({
-      loading: true, 
-      uploadedImages, 
+      loading: true,
+      uploadedImages,
       failedImages
     })
     try {
@@ -152,6 +153,20 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
       loading: false
     })
     return true
+  }
+
+  const deleteAllImages = async () => {
+    try {
+      const command = new DeleteObjectsCommand({
+        Bucket: bucket,
+        Delete: {
+          Objects: []
+        }
+      })
+      const { Deleted } = await s3Client.send(command)
+    } catch (error) {
+
+    }
   }
 
   useEffect(() => {
