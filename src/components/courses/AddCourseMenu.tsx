@@ -1,75 +1,37 @@
-import useCustomToast from '../../hooks/useCustomToast';
-import useInsertData from '../../hooks/useInsertData';
 import { AddIcon } from '@chakra-ui/icons';
-import { AddLocationFormValues } from '../locations/AddLocationMenu';
 import {
-  AlertDialog,
-  AlertDialogBody,
-  AlertDialogContent,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogOverlay,
   Button,
   Flex,
   Menu,
   MenuButton,
   MenuItem,
   MenuList,
-  Text,
-  useDisclosure
+  Text
 } from '@chakra-ui/react';
-import { Program } from '../../models/Program';
-import { useForm } from 'react-hook-form';
-import { useRef } from 'react';
 
 export interface AddCourseMenuProps {
   isDisabled?: boolean
+  onClick: {
+    internal: () => void,
+    external: () => void
+  }
 }
 
-const AddCourseMenu = ({ isDisabled = false }: AddCourseMenuProps) => {
-  const {
-    error,
-    loading,
-    insertData
-  } = useInsertData<Program>()
-  const {
-    handleSubmit,
-    register,
-    reset,
-    formState: { errors }
-  } = useForm<AddLocationFormValues>()
-  const { errorToast, successToast } = useCustomToast()
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const cancelRef = useRef(null)
-  const formRef = useRef<HTMLFormElement>(null)
-
-  const handleAddLocation = async () => {
-
-  }
-  const handleClick = () => {
-    formRef.current?.dispatchEvent(new Event("submit", {
-      cancelable: true,
-      bubbles: true
-    }))
-  }
-
+const AddCourseMenu = ({ onClick, isDisabled = false }: AddCourseMenuProps) => {
   return (
     <Flex>
       <Menu>
         <MenuButton
           as={Button}
           isDisabled={isDisabled}
-          onClick={onOpen}
-          leftIcon={
-            <AddIcon />
-          }>
+          leftIcon={<AddIcon />}>
           <Text>
             Agregar curso
           </Text>
         </MenuButton>
         <MenuList>
-          <MenuItem>Interno</MenuItem>
-          <MenuItem>Externo</MenuItem>
+          <MenuItem onClick={onClick.internal}>Interno</MenuItem>
+          <MenuItem onClick={onClick.external}>Externo</MenuItem>
         </MenuList>
       </Menu>
     </Flex>

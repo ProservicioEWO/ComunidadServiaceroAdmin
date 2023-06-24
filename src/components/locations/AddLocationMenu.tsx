@@ -31,7 +31,7 @@ export interface AddLocationFormValues {
 
 export interface AddLocationMenuProps {
   nextId: string
-  cityId: number
+  cityId: string
   isDisabled?: boolean
   toData: Location[] | null
 }
@@ -54,7 +54,7 @@ const AddLocationMenu = ({ nextId, cityId, toData, isDisabled = false }: AddLoca
   const formRef = useRef<HTMLFormElement>(null)
   const handleAddLocation = async ({ name, id }: AddLocationFormValues) => {
     if (toData) {
-      const newLoc = { id, name, cityId }
+      const newLoc = { id, name, cityId: cityId ?? "" }
       const ok = await insertData("/locations", newLoc)
       if (ok) {
         successToast("Se agregó la nueva instalación con éxito")

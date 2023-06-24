@@ -1,22 +1,22 @@
 import { UUID } from "../shared/typeAlias";
 
+export enum ProgramType {
+  internal = "i",
+  external = "e"
+}
+
 export interface Program {
   id: UUID
+  simpleId: string
   name: string
-  auto: false
   description: string
+  auto: boolean
   cost: string
-  help: string
-  date: string
-  locationId: string
-  duration: number
-  schedule: string
-  inscriptionLink: string
-  rulesLink: string
-  plan: string
-  req: string
   cityId: string
-  section: number
-  type: string
+  rulesLink: string
+  mainLink: string
+  advantage: string
+  type: ProgramType
   color: string
+  section: number
 }

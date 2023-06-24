@@ -66,7 +66,7 @@ const LocationDetailView = () => {
           <AddLocationMenu
             isDisabled={loading}
             nextId={newId}
-            cityId={Number(cityId)}
+            cityId={cityId ?? ""}
             toData={data} />
           <DataList<Location>
             list={data}

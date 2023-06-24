@@ -13,7 +13,7 @@ interface ApiResponse<T> {
 
 const useFetch = <T>(): ApiResponse<T> => {
   const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
   const fetchData = async (endpoint: string, param: Param = null, query: Query = null) => {

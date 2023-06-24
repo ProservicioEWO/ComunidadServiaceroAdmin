@@ -11,16 +11,7 @@ const Locations = () => {
     <HStack align="stretch" w="full">
       <CitiesView />
       <Box w="full">
-        {
-          cityId ?
-            <Outlet /> :
-            !cities.state.loading &&
-            <Card>
-              <CardBody>
-                <Text>Selecciona una ciudad</Text>
-              </CardBody>
-            </Card>
-        }
+        <Outlet />
       </Box>
     </HStack>
   )

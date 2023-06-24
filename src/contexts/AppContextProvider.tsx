@@ -1,6 +1,5 @@
 import useFetch from '../hooks/useFetch';
 import { City } from '../models/City';
-import { Event } from '../models/Event';
 import {
   createContext,
   Dispatch,
@@ -10,12 +9,13 @@ import {
   useMemo,
   useState
 } from 'react';
+import { Event } from '../models/Event';
 import { Location } from '../models/Location';
-import { NIL as NIL_UUID, v4 as uuidv4, v5 as uuidv5 } from 'uuid';
+import { NIL as NIL_UUID, v4 as uuidv4 } from 'uuid';
 import { User } from '../models/User';
 import { UUID } from '../shared/typeAlias';
-import { Program } from '../models/Program';
-import Loading from '../pages/Loading';
+import { InternalProgram } from '../models/InternalProgram';
+import { ExternalProgram } from '../models/ExternalProgram';
 
 type ContextState = { loading: boolean, error: string | null }
 type ContextSetter<T> = Dispatch<SetStateAction<T>>
@@ -50,8 +50,9 @@ export interface AppContextValue {
   }
   programs: {
     state: ContextState,
-    get: Program[] | null,
-    set: ContextSetter<Program[]>
+    list: (ExternalProgram | InternalProgram)[] | null,
+    set: ContextSetter<(ExternalProgram | InternalProgram)[]>
+    fetch: (cityId?: string, sectionId?: string) => Promise<void>
   }
 }
 
@@ -84,8 +85,9 @@ export const AppContext = createContext<AppContextValue>({
     set: () => { }
   },
   programs: {
+    fetch: async (cityId?: string, sectionId?: string) => { },
+    list: null,
     state: { loading: false, error: null },
-    get: null,
     set: () => { }
   }
 })
@@ -110,6 +112,12 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
     fetchData: fetchCities
   } = useFetch<City[]>()
   const {
+    data: locationsData,
+    loading: locationsLoading,
+    error: locationsError,
+    fetchData: fetchLocations
+  } = useFetch<Location[]>()
+  const {
     data: eventsData,
     loading: eventsLoading,
     error: eventsError,
@@ -120,18 +128,18 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
     loading: programsLoading,
     error: programsError,
     fetchData: fetchPrograms
-  } = useFetch<Program[]>()
+  } = useFetch<(ExternalProgram | InternalProgram)[]>()
   const [users, setUsers] = useState<User[]>([])
   const [cities, setCities] = useState<City[]>([])
+  const [locations, setLocations] = useState<Location[]>([])
   const [events, setEvents] = useState<Event[]>([])
-  const [programs, setPrograms] = useState<Program[]>([])
+  const [programs, setPrograms] = useState<(ExternalProgram | InternalProgram)[]>([])
   const [password, setPassword] = useState("")
   const value = useMemo<AppContextValue>(() => ({
     get starting() {
       return citiesLoading ||
         usersLoading ||
-        eventsLoading ||
-        programsLoading
+        eventsLoading
     },
     get newId() {
       //const nid = this.get?.map(e => e.id)[Math.floor(Math.random() * (100))] ?? NIL_UUID
@@ -148,9 +156,9 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       value: password
     },
     locations: {
-      fetch: async (cityId?: string) => await fetchPassword("/cities/:id/locations", { cityId }),
-      state: { loading: false, error: null },
-      list: null
+      fetch: async (cityId?: string) => await fetchLocations("/cities/:cityId/locations", { cityId }),
+      state: { loading: locationsLoading, error: locationsError },
+      list: locations
     },
     cities: {
       state: { loading: citiesLoading, error: citiesError },
@@ -164,8 +172,18 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
     },
     programs: {
       state: { loading: programsLoading, error: programsError },
-      get: programs,
-      set: setPrograms
+      list: programs,
+      set: setPrograms,
+      fetch: async (cityId?: string, sectionId?: string) => {
+        if (!cityId && !sectionId) { 
+          return await fetchPrograms("/programs")
+        }
+        return await fetchPrograms(
+          "/cities/:cityid/programs/",
+          { cityid: cityId },
+          sectionId ? { section: sectionId } : null
+        )
+      }
     }
   }),
     [
@@ -175,6 +193,9 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       cities,
       citiesLoading,
       citiesError,
+      locations,
+      locationsLoading,
+      locationsError,
       events,
       eventsLoading,
       eventsError,
@@ -190,7 +211,6 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
     fetchUsers("/users?_expand=enterprise")
     fetchCities("/cities")
     fetchEvents("/events")
-    fetchPrograms("/programs")
   }, [])
 
   useEffect(() => {
@@ -204,6 +224,12 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setCities(citiesData)
     }
   }, [citiesData])
+
+  useEffect(() => {
+    if (locationsData) {
+      setLocations(locationsData)
+    }
+  }, [locationsData])
 
   useEffect(() => {
     if (eventsData) {

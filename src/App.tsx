@@ -1,22 +1,28 @@
-import { Route, Routes, useLocation } from 'react-router-dom';
-
 import Calendar from './pages/Calendar';
 import Courses from './pages/Courses';
+import EventsDetailView from './components/gallery/EventsDetailView';
 import Gallery from './pages/Gallery';
-import { LocationDetailView } from './components/locations';
+import SectionIndex from './components/SectionIndex';
 import Locations from './pages/Locations';
 import MainLayout from './shared/MainLayout';
 import NotFound from './pages/NotFound';
 import Statitistics from './pages/Statitistics';
+import useAppHeaderContext from './hooks/useAppHeaderContext';
 import UserDetailView from './components/users/UserDetailView';
 import Users from './pages/Users';
 import { CourseDetailView, CourseSectionDetailView } from './components/courses';
+import {
+  CSBuilding,
+  CSCalendar,
+  CSChart,
+  CSGallery,
+  CSTeacher,
+  CSUsers
+} from './icons/CSIcons';
+import { LocationDetailView } from './components/locations';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { useEffect } from 'react';
-import { CSUsers, CSBuilding, CSTeacher, CSGallery, CSCalendar, CSChart } from './icons/CSIcons';
-import useAppHeaderContext from './hooks/useAppHeaderContext';
-import EventsDetailView from './components/gallery/EventsDetailView';
-import { Text } from '@chakra-ui/react';
-import GalleryIndex from './components/gallery/GalleryIndex';
+
 
 const App = () => {
   const { pathname } = useLocation()
@@ -44,15 +50,18 @@ const App = () => {
           <Route path=':userId' element={<UserDetailView />} />
         </Route>
         <Route path='locations' element={<Locations />}>
+          <Route index element={<SectionIndex message='Selecciona una ciudad para administrar las instalaciones' />} />
           <Route path=":cityId" element={<LocationDetailView />} />
         </Route>
         <Route path='courses' element={<Courses />}>
+          <Route index element={<SectionIndex message='Selecciona una ciudad para administrar los programas' />} />
           <Route path=':cityId?' element={<CourseSectionDetailView />}>
+            <Route index element={<SectionIndex message='Selecciona una seccion' />} />
             <Route path=':sectionId?' element={<CourseDetailView />} />
           </Route>
         </Route>
         <Route path='gallery' element={<Gallery />}>
-          <Route index element={<GalleryIndex />} />
+          <Route index element={<SectionIndex message='Selecciona un evento para administrar la galeria de imágenes' />} />
           <Route path=':eventId' element={<EventsDetailView />} />
         </Route>
         <Route path='calendar' element={<Calendar />} />

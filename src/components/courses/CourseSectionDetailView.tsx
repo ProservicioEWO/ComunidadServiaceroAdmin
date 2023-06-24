@@ -1,21 +1,19 @@
-import { Box, Card, CardBody, HStack, Image, Text, VStack } from '@chakra-ui/react';
-import { NavLink, Outlet, useParams } from 'react-router-dom';
+import CourseSectionTabs from './CourseSectionTabs';
+import { Card, CardBody, VStack } from '@chakra-ui/react';
 import { CourseParams } from './CourseDetailView';
+import { Outlet, useParams } from 'react-router-dom';
 
 const CourseSectionDetailView = () => {
   const { cityId } = useParams<CourseParams>()
   return (
-    <VStack align="stretch">
-      {
-        cityId ?
-          <Outlet /> :
-          <Card>
-            <CardBody>
-              <Text>Selecciona una ciudad</Text>
-            </CardBody>
-          </Card>
-      }
-    </VStack>
+    <Card>
+      <CardBody>
+        <VStack align="stretch">
+          <CourseSectionTabs />
+          <Outlet />
+        </VStack>
+      </CardBody>
+    </Card>
   )
 }
 
