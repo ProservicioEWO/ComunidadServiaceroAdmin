@@ -20,11 +20,14 @@ import {
   CSUsers
 } from './icons/CSIcons';
 import { LocationDetailView } from './components/locations';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
+import StatitisticsDetails, { StatsParams } from './components/statitistics/StatitisticsDetails';
+import { Text } from '@chakra-ui/react';
 
 
 const App = () => {
+  const { userId } = useParams<StatsParams>()
   const { pathname } = useLocation()
   const { icon, title } = useAppHeaderContext()
   const page = pathname.match(/^\/admin\/(?<section>\w+)/)?.groups?.section ?? ""
@@ -65,9 +68,13 @@ const App = () => {
           <Route path=':eventId' element={<EventsDetailView />} />
         </Route>
         <Route path='calendar' element={<Calendar />} />
-        <Route path='statistics' element={<Statitistics />} />
+        <Route path='statistics' element={<Statitistics />}>
+          <Route path=':statType' element={<StatitisticsDetails />}>
+            <Route index path=':userId' element={<Text>Detalle de log usuario</Text>}/>
+          </Route>
+        </Route>
+        <Route path='*' element={<NotFound />} />
       </Route>
-      <Route path='*' element={<NotFound />} />
     </Routes>
   )
 }

@@ -1,105 +1,108 @@
-import Chart from 'react-apexcharts';
 import CountUp from 'react-countup';
-import { ApexOptions } from 'apexcharts';
 import {
   Box,
-  Card,
-  CardBody,
-  CardHeader,
+  Button,
   Divider,
-  GridItem,
-  Heading,
+  FormControl,
+  FormLabel,
   HStack,
   Icon,
+  Input,
   SimpleGrid,
+  Spacer,
   Text,
   VStack
 } from '@chakra-ui/react';
-import { CSBuilding } from '../icons/CSIcons';
+import {
+  CSBuilding,
+  CSCalendar,
+  CSGallery,
+  CSTeacher
+} from '../icons/CSIcons';
+import { NavLink, Outlet } from 'react-router-dom';
 import { SVGComponent } from '../shared/typeAlias';
 
-const StatCard = ({ bg, title, icon }: { bg: string, title: string, icon: SVGComponent | undefined }) => {
+export interface StatCardProps {
+  bg: string,
+  title: string,
+  icon: SVGComponent | undefined
+  to: string
+}
+
+const StatCard = ({ bg, title, icon, to }: StatCardProps) => {
   return (
-    <Box color="white" bg={bg} borderRadius="lg" p="2" shadow="md">
-      <VStack align="start" justify="center">
-        <HStack>
-          <Icon as={icon} />
-          <Text p='3'>{title}</Text>
-        </HStack>
-        <Divider />
-        <Text fontSize="6xl" fontWeight="bold">
-          <CountUp end={100} duration={1} />
-        </Text>
-      </VStack>
-    </Box>
+    <NavLink to={to}>
+      <Box color="white" bg={bg} borderRadius="lg" p="4" shadow="md">
+        <VStack>
+          <HStack>
+            <Icon as={icon} boxSize='8' />
+            <Text p='1'>{title}</Text>
+          </HStack>
+          <Divider />
+          <Text fontSize="6xl" fontWeight="bold">
+            <CountUp end={(Math.random() + 0.1) * 23} duration={1} />
+          </Text>
+        </VStack>
+      </Box>
+    </NavLink>
   )
 }
 
 const Statitistics = () => {
-  const data: { options: ApexOptions, series: ApexAxisChartSeries | ApexNonAxisChartSeries } = {
-    options: {
-      chart: {
-        id: "basic-bar",
-      },
-      xaxis: {
-        categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999]
-      },
-    },
-    series: [
-      {
-        name: "series-1",
-        data: [30, 40, 45, 50, 49, 60, 70, 91]
-      }
-    ]
-  }
-
   const statsInfo = [
     {
       title: "Instalaciones",
-      color: "#23fc73",
+      color: "#75afff",
+      to: 'locations',
       icon: CSBuilding
     },
     {
       title: "Programas",
-      color: "#ffbf00"
+      color: "#ffc64d",
+      to: 'programs',
+      icon: CSTeacher
     },
     {
       title: "Galería",
-      color: "#ff6347"
+      color: "#ff704d",
+      to: 'gallery',
+      icon: CSGallery
     },
     {
       title: "Calendario",
-      color: "#2373fc"
+      color: "#63d6d0",
+      to: 'calendar',
+      icon: CSCalendar
     }
   ]
 
   return (
     <VStack w="full" align="stretch" spacing={4}>
+      <HStack alignItems='end' spacing={4}>
+        <Spacer />
+        <Box>
+          <FormControl bg='white' variant='floating-date'>
+            <FormLabel>Inicio:</FormLabel>
+            <Input type='date' value={new Date("2023-06-01").toISOString().split("T")[0]} />
+          </FormControl>
+        </Box>
+        <Box>
+          <FormControl bg='white' variant='floating-date'>
+            <FormLabel>Fin:</FormLabel>
+            <Input type='date' value={new Date().toISOString().split("T")[0]} />
+          </FormControl>
+        </Box>
+        <Button>Consultar</Button>
+      </HStack>
       <SimpleGrid columns={4} spacing={4}>
         {
-          statsInfo.map(({ title, color, icon }) => (
-            <StatCard bg={color} title={title} icon={icon} />
+          statsInfo.map(({ title, color, icon, to }, i) => (
+            <StatCard key={i} bg={color} title={title} icon={icon} to={to} />
           ))
         }
-        <GridItem colSpan={3}>
-          <Card>
-            <CardHeader>
-              <Heading size='lg'>Entradas por usuario</Heading>
-            </CardHeader>
-            <CardBody>
-              <Chart options={data.options} series={data.series} type="line" />
-            </CardBody>
-          </Card>
-        </GridItem>
-        <Card>
-          <CardHeader>
-            <Heading size='lg'>Algún titulo</Heading>
-          </CardHeader>
-          <CardBody>
-            {/* <Chart options={data.options} series={data.series} type="donut" /> */}
-          </CardBody>
-        </Card>
       </SimpleGrid>
+      <Text>Visitas totales: <b>123</b></Text>
+      <Outlet />
     </VStack>
   )
 }

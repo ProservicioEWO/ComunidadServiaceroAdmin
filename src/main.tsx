@@ -101,6 +101,24 @@ const comunidadTheme = extendTheme({
               transformOrigin: "left top",
             }
           }
+        },
+        "floating-date": {
+          container: {
+            label: {
+              top: "-25px",
+              left: "-5px",
+              zIndex: 2,
+              position: "absolute",
+              backgroundColor: "white",
+              color: "black",
+              fontWeight: 600,
+              pointerEvents: "none",
+              transform:"scale(0.85)",
+              mx: 3,
+              px: 1,
+              my: 3,
+            }
+          }
         }
       }
     }
