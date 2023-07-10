@@ -1,24 +1,28 @@
 import useFetch from '../hooks/useFetch';
 import { City } from '../models/City';
+import { ContextSetter, ContextState, FilterPredicate, UUID } from '../shared/typeAlias';
 import {
   createContext,
-  Dispatch,
   ReactNode,
-  SetStateAction,
   useEffect,
   useMemo,
   useState
 } from 'react';
 import { Event } from '../models/Event';
+import { ExternalProgram } from '../models/ExternalProgram';
+import { InternalProgram } from '../models/InternalProgram';
 import { Location } from '../models/Location';
+import { Log } from '../models/Log';
+import { Module } from '../models/Module';
 import { NIL as NIL_UUID, v4 as uuidv4 } from 'uuid';
 import { User } from '../models/User';
-import { UUID } from '../shared/typeAlias';
-import { InternalProgram } from '../models/InternalProgram';
-import { ExternalProgram } from '../models/ExternalProgram';
+import { formatDate } from '../shared/utils';
 
-type ContextState = { loading: boolean, error: string | null }
-type ContextSetter<T> = Dispatch<SetStateAction<T>>
+export interface ContextLogFilters {
+  dateStart: string
+  dateEnd: string
+  moduleId?: string
+}
 
 export interface AppContextValue {
   readonly newId: UUID
@@ -51,8 +55,24 @@ export interface AppContextValue {
   programs: {
     state: ContextState,
     list: (ExternalProgram | InternalProgram)[] | null,
-    set: ContextSetter<(ExternalProgram | InternalProgram)[]>
+    set: ContextSetter<(ExternalProgram | InternalProgram)[]>,
     fetch: (cityId?: string, sectionId?: string) => Promise<void>
+  }
+  logs: {
+    state: ContextState,
+    list: Log[] | null,
+    filters: {
+      set: (filters: ContextLogFilters) => void,
+      value: ContextLogFilters
+    },
+    set: ContextSetter<Log[]>,
+    fetch: (moduleId?: string) => Promise<void>
+  }
+  modules: {
+    state: ContextState,
+    get: Module[] | null,
+    filtered: Module[],
+    applyFilter: (predicate: FilterPredicate<Log>) => void
   }
 }
 
@@ -89,6 +109,22 @@ export const AppContext = createContext<AppContextValue>({
     list: null,
     state: { loading: false, error: null },
     set: () => { }
+  },
+  logs: {
+    fetch: async (moduleId?: string) => { },
+    state: { loading: false, error: null },
+    list: null,
+    set: () => { },
+    filters: {
+      value: { dateStart: "", dateEnd: "", moduleId: "" },
+      set: () => { }
+    },
+  },
+  modules: {
+    get: null,
+    filtered: [],
+    state: { loading: false, error: null },
+    applyFilter: () => { }
   }
 })
 
@@ -129,17 +165,38 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
     error: programsError,
     fetchData: fetchPrograms
   } = useFetch<(ExternalProgram | InternalProgram)[]>()
+  const {
+    data: logsData,
+    loading: logsLoading,
+    error: logsError,
+    fetchData: fetchLogs
+  } = useFetch<Log[]>()
+  const {
+    data: modulesData,
+    loading: modulesLoading,
+    error: modulesError,
+    fetchData: fetchModules
+  } = useFetch<Module[]>()
   const [users, setUsers] = useState<User[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [locations, setLocations] = useState<Location[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [programs, setPrograms] = useState<(ExternalProgram | InternalProgram)[]>([])
+  const [logs, setLogs] = useState<Log[]>([])
+  const [modules, setModules] = useState<Module[]>([])
+  const [filteredModules, setFilteredModules] = useState<Module[]>([])
   const [password, setPassword] = useState("")
+  const [logsFilters, setLogsFilters] = useState<ContextLogFilters>({
+    dateStart: formatDate(new Date("2023-01-01")),
+    dateEnd: formatDate(new Date("2100-12-31")),
+    moduleId: ""
+  })
   const value = useMemo<AppContextValue>(() => ({
     get starting() {
       return citiesLoading ||
         usersLoading ||
-        eventsLoading
+        eventsLoading ||
+        modulesLoading
     },
     get newId() {
       //const nid = this.get?.map(e => e.id)[Math.floor(Math.random() * (100))] ?? NIL_UUID
@@ -175,7 +232,7 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       list: programs,
       set: setPrograms,
       fetch: async (cityId?: string, sectionId?: string) => {
-        if (!cityId && !sectionId) { 
+        if (!cityId && !sectionId) {
           return await fetchPrograms("/programs")
         }
         return await fetchPrograms(
@@ -183,6 +240,42 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
           { cityid: cityId },
           sectionId ? { section: sectionId } : null
         )
+      }
+    },
+    logs: {
+      list: logs,
+      state: { loading: logsLoading, error: logsError },
+      set: setLogs,
+      fetch: async (moduleId?: string) => {
+        if (!moduleId) {
+          return await fetchLogs("/logs")
+        }
+        return await fetchLogs(
+          "/logs",
+          undefined,
+          { _expandA: ["module", "user"], moduleId }
+        )
+      },
+      filters: {
+        value: {
+          ...logsFilters
+        },
+        set: (filters) => {
+          setLogsFilters({ ...filters })
+        }
+      },
+    },
+    modules: {
+      get: modules,
+      filtered: !filteredModules.length ? modules : filteredModules,
+      state: { loading: modulesLoading, error: modulesError },
+      applyFilter: (predicate) => {
+        const fm = modules
+          .map<Module>(({ logs, ...rest }) => ({
+            ...rest,
+            logs: logs.filter(predicate)
+          }))
+        setFilteredModules(fm)
       }
     }
   }),
@@ -202,15 +295,24 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       programs,
       programsLoading,
       programsError,
+      logs,
+      logsLoading,
+      logsError,
+      modules,
+      filteredModules,
+      modulesError,
+      modulesLoading,
       password,
       passwordLoading,
-      passwordError
+      passwordError,
+      logsFilters
     ])
 
   useEffect(() => {
     fetchUsers("/users?_expand=enterprise")
     fetchCities("/cities")
     fetchEvents("/events")
+    fetchModules("/modules?_embed=logs")
   }, [])
 
   useEffect(() => {
@@ -244,10 +346,22 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
   }, [programsData])
 
   useEffect(() => {
+    if (logsData) {
+      setLogs(logsData)
+    }
+  }, [logsData])
+
+  useEffect(() => {
     if (userPassword) {
       setPassword(userPassword.password)
     }
   }, [userPassword])
+
+  useEffect(() => {
+    if (modulesData) {
+      setModules(modulesData)
+    }
+  }, [modulesData])
 
   return (
     <AppContext.Provider value={value}>

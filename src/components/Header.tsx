@@ -27,7 +27,7 @@ const Header = ({ icon, text }: HeaderProps) => {
             </Heading>
           </HStack>
           <Spacer />
-          <SignupUser user="daniel.ibarra" fullname="Daniel Ibarra" />
+          <SignupUser />
         </HStack>
       </CardBody>
     </Card>

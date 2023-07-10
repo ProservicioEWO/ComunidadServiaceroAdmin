@@ -1,36 +1,63 @@
 import Chart from 'react-apexcharts';
 import useAppContext from '../../hooks/useAppContext';
 import useCustomToast from '../../hooks/useCustomToast';
-import { ApexOptions } from 'apexcharts';
+import { ApexChartData } from '../../shared/typeAlias';
 import {
   Card,
   CardBody,
+  Flex,
   GridItem,
   Heading,
+  HStack,
+  Icon,
+  IconButton,
   SimpleGrid,
+  Spacer,
+  Spinner,
+  Text,
+  Tooltip,
   VStack
 } from '@chakra-ui/react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Log } from '../../models/Log';
+import { Outlet, useNavigate, useParams } from 'react-router-dom';
+import { QuestionOutlineIcon } from '@chakra-ui/icons';
+import { SiMicrosoftexcel } from 'react-icons/si';
+import { useEffect, useState } from 'react';
+
+interface DataExcelRow {
+  id: string
+  username: string
+  date: string
+  module: string
+  type: string
+}
+
+interface Grouped<T> extends Record<string, T[]> {
+  [key: string]: T[]
+}
 
 export interface StatsParams extends Record<string, string | undefined> {
-  statType?: string
+  moduleId?: string
   userId?: string
 }
 
 const StatitisticsDetails = () => {
   const navigate = useNavigate()
-  const { users } = useAppContext()
   const { errorToast } = useCustomToast()
-  const data: { options: ApexOptions, series: ApexAxisChartSeries | ApexNonAxisChartSeries } = {
+  const { moduleId } = useParams<StatsParams>()
+  const { users, logs, modules } = useAppContext()
+  const [dataToExport, setDataToExport] = useState<DataExcelRow[]>([])
+  const [data, setData] = useState<ApexChartData>({
     options: {
       chart: {
         id: "basic-bar",
         height: 100,
         events: {
-          click(_e, chart, options) {
+          dataPointSelection(_e, chart, options) {
             const category = chart.w.config.xaxis.categories[options.dataPointIndex]
-            const user = users.get?.find(({ user }) => user === category)
+            const user = users.get?.find(({ username }) => username === category)
             if (user) {
+              console.log(user)
               navigate(user.id)
             } else {
               errorToast("Ocurrió un problema obteniendo los detalles del usuario.")
@@ -38,62 +65,163 @@ const StatitisticsDetails = () => {
           }
         }
       },
-      xaxis: {
-        categories: users.get?.map(({ user }) => user)
+      plotOptions: {
+        bar: {
+          columnWidth: "40%"
+        }
       },
+      fill: {
+        type: 'gradient',
+        gradient: {
+          shade: 'light',
+          type: 'vertical',
+          shadeIntensity: 0.5,
+          gradientToColors: ['#8b83f7'], // Color final del gradiente
+          inverseColors: true,
+          opacityFrom: 1,
+          opacityTo: 1,
+          stops: [0, 100],
+        },
+      },
+      xaxis: {
+        categories: []
+      }
     },
     series: [
       {
         name: "visitas por usuario",
         color: "#a86fe8",
-        data: Array(6).fill(10).map(e => Math.trunc(((Math.random() + 0.1) * e)))
+        data: []
       }
     ]
+  })
+
+  const handleExport = async () => {
+    const XLSX = await import("xlsx")
+    const workbook = XLSX.utils.book_new()
+    const worksheet = XLSX.utils.json_to_sheet(dataToExport)
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'visitas')
+    XLSX.writeFile(workbook, 'visitas.xlsx')
   }
 
-  const data2: { options: ApexOptions, series: ApexAxisChartSeries | ApexNonAxisChartSeries } = {
-    options: {
-      chart: {
-        id: 'basic-donut',
-      },
-      plotOptions: {
-        bar: {
-          horizontal: true,
-          //labels: ["A", "B", "C", "D"]
+  useEffect(() => {
+    logs.fetch(moduleId)
+  }, [moduleId])
+
+  useEffect(() => {
+    const logList = logs.list?.filter(({ date }) => (
+      new Date(date) >= new Date(logs.filters.value.dateStart) &&
+      new Date(date) <= new Date(logs.filters.value.dateEnd)
+    )) ?? []
+    const dataExport = logList.map<DataExcelRow>(e => ({
+      id: e.id,
+      username: e.user.username,
+      date: e.date,
+      module: e.module.name,
+      type: e.user.type
+    }))
+
+    setDataToExport(dataExport)
+
+    const groupedLogList = logList.reduce<Grouped<Log>>(
+      (result, log) => {
+        if (!result[log.user.username]) {
+          result[log.user.username] = []
         }
-      }
-    },
+        result[log.user.username].push(log)
+        return result
+      }, {}
+    )
 
-    series: [{
-      name: "",
-      data: Array(4).fill(10).map(e => Math.trunc(((Math.random() + 0.1) * e)))
-    }],
-  }
+    setData(prevData => ({
+      ...prevData,
+      options: {
+        ...prevData.options,
+        chart: {
+          ...prevData.options.chart,
+          events: {
+            dataPointSelection(_e, chart, options) {
+              const category = chart.w.config.xaxis.categories[options.dataPointIndex]
+              const user = users.get?.find(({ username }) => username === category)
+              if (user) {
+                navigate(user.id)
+              } else {
+                errorToast("Ocurrió un problema obteniendo los detalles del usuario.")
+              }
+            }
+          }
+        },
+        xaxis: {
+          ...prevData.options.xaxis,
+          categories: Object.keys(groupedLogList)
+        }
+      },
+      series: [
+        {
+          name: "visitas por usuario",
+          color: "#a86fe8",
+          data: Object.values(groupedLogList).map(e => e.length)
+        }
+      ]
+    }))
+  }, [logs.list])
 
   return (
-    <SimpleGrid columns={4} spacing={4}>
-      <GridItem colSpan={4}>
-        <Card>
-          <CardBody>
-            <VStack align='stretch'>
-              <Heading size='lg'>Visitas por usuario</Heading>
-              <Chart options={data.options} series={data.series} type="bar" />
-            </VStack>
-          </CardBody>
-        </Card>
-      </GridItem>
-      {/* <GridItem colSpan={2}>
-        <Card>
-          <CardHeader>
-            <Heading size='md'>Algún titulo</Heading>
-          </CardHeader>
-          <CardBody>
-            <Chart options={data2.options} series={data2.series} type="bar" />
-          </CardBody>
-        </Card>
-      </GridItem> */}
-      <Outlet />
-    </SimpleGrid>
+    <VStack align="stretch">
+      <SimpleGrid columns={4} spacing={4} mb="-20px">
+        <GridItem colSpan={4}>
+          <Card>
+            <CardBody>
+              {
+                logs.state.loading ?
+                  <HStack>
+                    <Spinner />
+                    <Text>Cargando</Text>
+                  </HStack> :
+                  !(data.series[0] as { data: any[] }).data.length ?
+                    <Text>No hay datos disponibles para mostrar.</Text> :
+                    <VStack align='stretch'>
+                      <VStack alignItems='baseline'>
+                        <HStack w='full'>
+                          <Heading size='lg'>
+                            Visitas por usuario ({modules?.filtered?.find(e => e.id === moduleId)?.name})
+                          </Heading>
+                          <Spacer />
+                          <Tooltip
+                            hasArrow
+                            placement='start'
+                            label='Exportar a Excel'>
+                            <IconButton
+                              size='lg'
+                              colorScheme='green'
+                              icon={<Icon fontSize='2xl' as={SiMicrosoftexcel} />}
+                              aria-label={'export to Excel'}
+                              onClick={handleExport} />
+                          </Tooltip>
+                        </HStack>
+                        <HStack align='center' color='gray.500' fontSize='md'>
+                          <QuestionOutlineIcon />
+                          <Text>
+                            Puedes hacer click en la barra del usuario para ver los detalles.
+                          </Text>
+                        </HStack>
+                      </VStack>
+                      <Chart
+                        options={data.options}
+                        series={data.series}
+                        type="bar"
+                        height={350} />
+
+                    </VStack>
+              }
+            </CardBody>
+          </Card>
+        </GridItem>
+      </SimpleGrid>
+      <Flex w="full" justifyContent="center">
+        <Outlet />
+      </Flex>
+    </VStack>
   )
 }
 

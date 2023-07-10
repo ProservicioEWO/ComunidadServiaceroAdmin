@@ -1,16 +1,13 @@
-import Calendar from './pages/Calendar';
-import Courses from './pages/Courses';
-import EventsDetailView from './components/gallery/EventsDetailView';
-import Gallery from './pages/Gallery';
-import SectionIndex from './components/SectionIndex';
-import Locations from './pages/Locations';
-import MainLayout from './shared/MainLayout';
-import NotFound from './pages/NotFound';
-import Statitistics from './pages/Statitistics';
-import useAppHeaderContext from './hooks/useAppHeaderContext';
-import UserDetailView from './components/users/UserDetailView';
-import Users from './pages/Users';
+import { useEffect } from 'react';
+import { Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { CourseDetailView, CourseSectionDetailView } from './components/courses';
+import EventsDetailView from './components/gallery/EventsDetailView';
+import { LocationDetailView } from './components/locations';
+import SectionIndex from './components/SectionIndex';
+import StatisticsUserDetail from './components/statitistics/StatisticsUserDetail';
+import StatitisticsDetails, { StatsParams } from './components/statitistics/StatitisticsDetails';
+import UserDetailView from './components/users/UserDetailView';
+import useAppHeaderContext from './hooks/useAppHeaderContext';
 import {
   CSBuilding,
   CSCalendar,
@@ -19,11 +16,15 @@ import {
   CSTeacher,
   CSUsers
 } from './icons/CSIcons';
-import { LocationDetailView } from './components/locations';
-import { Route, Routes, useLocation, useParams } from 'react-router-dom';
-import { useEffect } from 'react';
-import StatitisticsDetails, { StatsParams } from './components/statitistics/StatitisticsDetails';
-import { Text } from '@chakra-ui/react';
+import Calendar from './pages/Calendar';
+import Courses from './pages/Courses';
+import Dashboard from './pages/Dashboard';
+import Gallery from './pages/Gallery';
+import Locations from './pages/Locations';
+import Login from './pages/Login';
+import NotFound from './pages/NotFound';
+import Statitistics from './pages/Statitistics';
+import Users from './pages/Users';
 
 
 const App = () => {
@@ -48,7 +49,7 @@ const App = () => {
 
   return (
     <Routes>
-      <Route path="admin" element={<MainLayout />}>
+      <Route path="admin" element={<Dashboard />}>
         <Route path="users" element={<Users />}>
           <Route path=':userId' element={<UserDetailView />} />
         </Route>
@@ -69,12 +70,14 @@ const App = () => {
         </Route>
         <Route path='calendar' element={<Calendar />} />
         <Route path='statistics' element={<Statitistics />}>
-          <Route path=':statType' element={<StatitisticsDetails />}>
-            <Route index path=':userId' element={<Text>Detalle de log usuario</Text>}/>
+          <Route index element={<SectionIndex message='Selecciona una categoria para ver las estadisticas.' />} />
+          <Route path=':moduleId' element={<StatitisticsDetails />}>
+            <Route index path=':userId' element={<StatisticsUserDetail />} />
           </Route>
         </Route>
         <Route path='*' element={<NotFound />} />
       </Route>
+      <Route path='login' element={<Login />}></Route>
     </Routes>
   )
 }

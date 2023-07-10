@@ -2,28 +2,43 @@ import { useState } from 'react'
 import { BASE_URL_API } from '../shared/cs-constants'
 
 export type Param = Record<string, string | undefined> | null
-export type Query = Record<string, string> | null
+export type Query = Record<string, string | string[]> | null
 
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   data: T | null,
   loading: boolean,
   error: string | null,
   fetchData: (e: string, p?: Param, q?: Query) => Promise<void>
 }
 
+const queryConverter = (record: Query) => (
+  Object.fromEntries(
+    Object.entries(record ?? {}).map(([key, value]) => {
+      if (typeof value === 'string') {
+        return [key, value];
+      } else if (Array.isArray(value)) {
+        return [key, value.join(',')];
+      }
+      return [key, ''];
+    })
+  )
+)
+
+
 const useFetch = <T>(): ApiResponse<T> => {
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
-  const fetchData = async (endpoint: string, param: Param = null, query: Query = null) => {
+
+  const fetchData = async (endpoint: string, param?: Param, query?: Query) => {
     try {
       setLoading(true)
-      const queryString = query && Object.entries(query).length ?`?${new URLSearchParams(query).toString()}` : ''
+      const queryString = query &&
+        Object.entries(query).length ? `?${new URLSearchParams(queryConverter(query)).toString()}` : ''
       const newEndpoint = param ? endpoint.replace(/:([a-zA-Z]+)/g, (match, key) => param[key] || match) : endpoint
       const url = `${BASE_URL_API}${newEndpoint}${queryString}`
       const res = await fetch(url)
-      
+
       if (!res.ok) {
         throw new Error(`${res.status} ${res.statusText}`)
       }

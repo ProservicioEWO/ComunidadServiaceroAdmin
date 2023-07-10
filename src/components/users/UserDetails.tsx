@@ -11,7 +11,7 @@ const UserDetails = ({ data }: UserDetailsProps) => {
   const { password } = useAppContext()
   const {
     enterprise: { logo },
-    user,
+    username,
     key,
     name,
     lastname,
@@ -27,7 +27,7 @@ const UserDetails = ({ data }: UserDetailsProps) => {
       <HStack align='stretch'>
         <Stat>
           <StatLabel>Usuario</StatLabel>
-          <StatNumber>{user}</StatNumber>
+          <StatNumber>{username}</StatNumber>
         </Stat>
         <Stat>
           <StatLabel>Clave</StatLabel>

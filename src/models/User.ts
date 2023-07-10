@@ -3,7 +3,7 @@ import { Enterprise } from "./Enterprise"
 
 export interface User {
   id: UUID
-  user: string
+  username: string
   key: string
   name: string
   lastname: string

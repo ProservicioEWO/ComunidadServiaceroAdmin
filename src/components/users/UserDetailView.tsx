@@ -149,7 +149,7 @@ const UserDetailView = () => {
                   entity: currentUser.entity,
                   type: currentUser.type
                 }}
-                user={currentUser.user} />
+                user={currentUser.username} />
             }
           </DrawerBody>
           <DrawerFooter>

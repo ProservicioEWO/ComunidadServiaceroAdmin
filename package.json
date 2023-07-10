@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@aws-amplify/ui-react": "^5.0.4",
     "@aws-sdk/client-s3": "^3.341.0",
     "@chakra-ui/icons": "^2.0.18",
     "@chakra-ui/react": "^2.5.1",
@@ -25,12 +26,15 @@
     "@types/loadable__component": "^5.13.4",
     "@types/randomcolor": "^0.5.7",
     "@types/uuid": "^9.0.1",
+    "amazon-cognito-identity-js": "^6.3.1",
     "apexcharts": "^3.41.0",
+    "aws-amplify": "^5.3.3",
     "aws-sdk": "^2.1386.0",
     "framer-motion": "^10.2.4",
     "localforage": "^1.10.0",
     "match-sorter": "^6.3.1",
     "moment": "^2.29.4",
+    "primereact": "^9.6.0",
     "randomcolor": "^0.6.2",
     "react": "^18.2.0",
     "react-apexcharts": "^1.4.0",
@@ -43,7 +47,8 @@
     "react-router-dom": "^6.9.0",
     "react-spinners": "^0.13.8",
     "sort-by": "^1.2.0",
-    "uuid": "^9.0.0"
+    "uuid": "^9.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@types/react": "^18.0.27",

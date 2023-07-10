@@ -1,6 +1,6 @@
+import { Auth } from 'aws-amplify';
 import {
   Avatar,
-  Button,
   HStack,
   Menu,
   MenuButton,
@@ -11,6 +11,8 @@ import {
   Text,
   VStack
 } from '@chakra-ui/react';
+import { useEffect, useState } from 'react';
+
 
 interface SignupUserProps {
   user: string,
@@ -18,16 +20,31 @@ interface SignupUserProps {
   photoUrl?: string
 }
 
-const SignupUser = ({ user, fullname, photoUrl }: SignupUserProps) => {
+const SignupUser = () => {
+  /* const [authUser, setAuthUser] = useState<any | null>(null)
+  const checkAuth = async () => {
+    try {
+      const _authUser = await Auth.currentAuthenticatedUser()
+      setAuthUser(_authUser)
+      console.log(_authUser)
+    } catch (error) {
+      setAuthUser(null)
+    }
+  }
+
+  useEffect(() => {
+    checkAuth()
+  }, []) */
+
   return (
     <HStack>
       <VStack align="end" spacing="0">
-        <Text fontSize="sm" as="b">{fullname}</Text>
-        <Text fontSize="xs">{user}</Text>
+        <Text fontSize="sm" as="b">{"fullname"}</Text>
+        <Text fontSize="xs">{"user.name"}</Text>
       </VStack>
       <Menu>
         <MenuButton>
-          <Avatar name={fullname} src={photoUrl} />
+          <Avatar name={"fullname"} src={"photoUrl"} />
         </MenuButton>
         <MenuList>
           <MenuGroup title="Administrar">
@@ -35,8 +52,11 @@ const SignupUser = ({ user, fullname, photoUrl }: SignupUserProps) => {
           </MenuGroup>
           <MenuDivider />
           <MenuItem>Logs</MenuItem>
-          <MenuDivider />
-          <MenuItem>Cerrar Sesión</MenuItem>
+          {
+            true &&
+            <MenuDivider /> &&
+            <MenuItem onClick={() => Auth.signOut({ global: true })}>Cerrar Sesión</MenuItem>
+          }
         </MenuList>
       </Menu>
     </HStack>

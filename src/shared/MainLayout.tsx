@@ -1,6 +1,8 @@
 import Header from '../components/Header';
+import Loading from '../pages/Loading';
 import Navbar from '../components/Navbar';
 import NavbarButton from '../components/NavbarButton';
+import useAppContext from '../hooks/useAppContext';
 import useAppHeaderContext from '../hooks/useAppHeaderContext';
 import { BASE_URL_IMG, VIEW_PADDING } from './cs-constants';
 import {
@@ -17,10 +19,8 @@ import {
   CSTeacher,
   CSUsers
 } from '../icons/CSIcons';
-import { Outlet } from 'react-router-dom';
 import { NotAllowedIcon } from '@chakra-ui/icons';
-import useAppContext from '../hooks/useAppContext';
-import Loading from '../pages/Loading';
+import { Outlet } from 'react-router-dom';
 
 const MainLayout = () => {
   const { starting } = useAppContext()
@@ -28,7 +28,7 @@ const MainLayout = () => {
   return (
     starting ?
       <Loading /> :
-      <HStack h="100vh" bg='gray.200' overflow='hidden'>
+      <HStack id="main-layout" h="100vh" bg='gray.200' overflow='hidden'>
         <Navbar logo={<Image src={`${BASE_URL_IMG}/cs_sm.png`} />} logoHref='/admin'>
           <NavbarButton href="users" icon={CSUsers} text="Usuarios" />
           <NavbarButton href="locations" icon={CSBuilding} text="Instalaciones" />
@@ -37,7 +37,7 @@ const MainLayout = () => {
           <NavbarButton href="calendar" icon={CSCalendar} text="Calendario" />
           <NavbarButton href="statistics" icon={CSChart} text="Estadisticas" />
         </Navbar>
-        <Box w='full' h='full' bg='cream.50' overflow="auto">
+        <Box w='full' h='full' bg='cream.50' overflowX="hidden" overflowY="auto">
           <VStack p={VIEW_PADDING} spacing="5">
             <Header icon={icon.get ?? NotAllowedIcon} text={title.get} />
             <Outlet />

@@ -1,10 +1,24 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App'
-import { ChakraProvider, extendTheme } from '@chakra-ui/react'
-import { BrowserRouter } from 'react-router-dom'
-import AppContextProvider from './contexts/AppContextProvider'
-import AppHeaderContextProvider from './contexts/AppHeaderContextProvider'
+import App from './App';
+import AppHeaderContextProvider from './contexts/AppHeaderContextProvider';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import { ChakraProvider, extendTheme } from '@chakra-ui/react';
+import { PrimeReactProvider } from 'primereact/api';
+import { Amplify, Auth } from 'aws-amplify';
+import AuthContextProvider from './contexts/AuthContextProvider';
+import PrimeCSSProvider from './shared/PrimeCSSProvider';
+
+Amplify.configure({
+  Auth: {
+    identityPoolId: "us-east-1:12c9962b-8973-4f7d-b1ce-b667f563ffac",
+    region: "us-east-1",
+    userPoolId: "us-east-1_oud83NQk8",
+    clientId: "69qusms538vl3b99tovn5fr8mp",
+    userPoolWebClientId: "69qusms538vl3b99tovn5fr8mp",
+    authenticationFlowType: 'USER_PASSWORD_AUTH'
+  }
+})
 
 const activeLabelStyles = {
   transform: "scale(0.85) translateY(-25px)",
@@ -113,7 +127,7 @@ const comunidadTheme = extendTheme({
               color: "black",
               fontWeight: 600,
               pointerEvents: "none",
-              transform:"scale(0.85)",
+              transform: "scale(0.85)",
               mx: 3,
               px: 1,
               my: 3,
@@ -127,14 +141,18 @@ const comunidadTheme = extendTheme({
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <ChakraProvider theme={comunidadTheme}>
-      <AppContextProvider>
-        <AppHeaderContextProvider>
-          <BrowserRouter>
-            <App />
-          </BrowserRouter>
-        </AppHeaderContextProvider>
-      </AppContextProvider>
-    </ChakraProvider>
+    <AuthContextProvider>
+      <ChakraProvider theme={comunidadTheme}>
+        <PrimeReactProvider>
+          <PrimeCSSProvider>
+            <AppHeaderContextProvider>
+              <BrowserRouter>
+                <App />
+              </BrowserRouter>
+            </AppHeaderContextProvider>
+          </PrimeCSSProvider>
+        </PrimeReactProvider>
+      </ChakraProvider>
+    </AuthContextProvider>
   </React.StrictMode>,
 )

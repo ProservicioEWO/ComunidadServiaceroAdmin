@@ -25,7 +25,7 @@ export interface NewUser extends Omit<User, 'enterprise'> {
 }
 
 export interface AddUserFormValues {
-  user: string,
+  username: string,
   key: string,
   password: string,
   name: string,
@@ -87,8 +87,8 @@ const AddUserView = () => {
               La clave de empleado es requerida
             </FormErrorMessage>
           </FormControl>
-          <FormControl isInvalid={!!errors.name}>
-            <Input {...register("user", { required: true })} size="lg" autoComplete="off" placeholder="Usuario" />
+          <FormControl isInvalid={!!errors.username}>
+            <Input {...register("username", { required: true })} size="lg" autoComplete="off" placeholder="Usuario" />
             <FormErrorMessage>
               El nombre de usuario es requerido"
             </FormErrorMessage>
