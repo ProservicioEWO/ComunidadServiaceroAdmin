@@ -20,7 +20,7 @@ const filterCallback = (search: string) => {
 const UsersListView = () => {
   const navigate = useNavigate()
   const [search, setSearch] = useState("")
-  const { users, password } = useAppContext()
+  const { users } = useAppContext()
   const { userId } = useParams<UserDetailParams>()
   const { successToast, errorToast } = useCustomToast()
   const { loading: deleteLoading, error: deleteError, deleteData } = useDeleteData()

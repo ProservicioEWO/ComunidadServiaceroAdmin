@@ -1,6 +1,11 @@
 import useFetch from '../hooks/useFetch';
 import { City } from '../models/City';
-import { ContextSetter, ContextState, FilterPredicate, UUID } from '../shared/typeAlias';
+import {
+  ContextSetter,
+  ContextState,
+  FilterPredicate,
+  UUID
+} from '../shared/typeAlias';
 import {
   createContext,
   ReactNode,
@@ -10,13 +15,14 @@ import {
 } from 'react';
 import { Event } from '../models/Event';
 import { ExternalProgram } from '../models/ExternalProgram';
+import { formatDate } from '../shared/utils';
 import { InternalProgram } from '../models/InternalProgram';
 import { Location } from '../models/Location';
 import { Log } from '../models/Log';
 import { Module } from '../models/Module';
 import { NIL as NIL_UUID, v4 as uuidv4 } from 'uuid';
 import { User } from '../models/User';
-import { formatDate } from '../shared/utils';
+import { AccessTokenState } from './AuthContextProvider';
 
 export interface ContextLogFilters {
   dateStart: string
@@ -24,9 +30,15 @@ export interface ContextLogFilters {
   moduleId?: string
 }
 
+export interface AppContextProps {
+  children: ReactNode
+  accessToken: AccessTokenState
+}
+
 export interface AppContextValue {
   readonly newId: UUID
   readonly starting: boolean
+  readonly _accessToken: AccessTokenState
   users: {
     state: ContextState
     get: User[] | null,
@@ -74,11 +86,23 @@ export interface AppContextValue {
     filtered: Module[],
     applyFilter: (predicate: FilterPredicate<Log>) => void
   }
+  userInfo: {
+    state: ContextState,
+    data: User | null
+    fetch: (userId: string) => Promise<void>
+  }
 }
 
 export const AppContext = createContext<AppContextValue>({
   get newId() { return NIL_UUID },
   get starting() { return false },
+  get _accessToken() {
+    return {
+      token: null,
+      tokenLoading: true,
+      tokenError: null
+    }
+  },
   users: {
     state: { loading: false, error: null },
     get: null,
@@ -125,10 +149,15 @@ export const AppContext = createContext<AppContextValue>({
     filtered: [],
     state: { loading: false, error: null },
     applyFilter: () => { }
+  },
+  userInfo: {
+    data: null,
+    state: { loading: true, error: null },
+    fetch: async () => { }
   }
 })
 
-const AppContextProvider = ({ children }: { children: ReactNode }) => {
+const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
   const {
     fetchData: fetchPassword,
     data: userPassword,
@@ -177,6 +206,13 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
     error: modulesError,
     fetchData: fetchModules
   } = useFetch<Module[]>()
+  const {
+    data: userInfoData,
+    loading: userInfoLoading,
+    error: userInfoError,
+    fetchData: fetchUserInfo
+  } = useFetch<User>()
+
   const [users, setUsers] = useState<User[]>([])
   const [cities, setCities] = useState<City[]>([])
   const [locations, setLocations] = useState<Location[]>([])
@@ -184,6 +220,7 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
   const [programs, setPrograms] = useState<(ExternalProgram | InternalProgram)[]>([])
   const [logs, setLogs] = useState<Log[]>([])
   const [modules, setModules] = useState<Module[]>([])
+  const [userInfo, setUserInfo] = useState<User | null>(null)
   const [filteredModules, setFilteredModules] = useState<Module[]>([])
   const [password, setPassword] = useState("")
   const [logsFilters, setLogsFilters] = useState<ContextLogFilters>({
@@ -202,18 +239,31 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       //const nid = this.get?.map(e => e.id)[Math.floor(Math.random() * (100))] ?? NIL_UUID
       return uuidv4()
     },
+    get _accessToken() { return accessToken },
     users: {
       state: { loading: usersLoading, error: usersError },
       get: users,
       set: setUsers
     },
     password: {
-      fetch: async (id?: string) => await fetchPassword("/users/:id", { id }),
+      fetch: async (id?: string) => {
+        if (accessToken.token) {
+          await fetchPassword("/users/:id", accessToken.token, { id })
+        }
+      },
       state: { loading: passwordLoading, error: passwordError },
       value: password
     },
     locations: {
-      fetch: async (cityId?: string) => await fetchLocations("/cities/:cityId/locations", { cityId }),
+      fetch: async (cityId?: string) => {
+        if (accessToken.token) {
+          await fetchLocations(
+            "/cities/:cityId/locations",
+            accessToken.token,
+            { cityId }
+          )
+        }
+      },
       state: { loading: locationsLoading, error: locationsError },
       list: locations
     },
@@ -232,14 +282,19 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       list: programs,
       set: setPrograms,
       fetch: async (cityId?: string, sectionId?: string) => {
-        if (!cityId && !sectionId) {
-          return await fetchPrograms("/programs")
+        if (accessToken.token) {
+          if (!cityId && !sectionId) {
+            await fetchPrograms("/programs", accessToken.token)
+          } else {
+            await fetchPrograms(
+              "/cities/:cityid/programs/",
+              accessToken.token,
+              { cityid: cityId },
+              sectionId ? { section: sectionId } : null
+            )
+          }
+
         }
-        return await fetchPrograms(
-          "/cities/:cityid/programs/",
-          { cityid: cityId },
-          sectionId ? { section: sectionId } : null
-        )
       }
     },
     logs: {
@@ -247,14 +302,19 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       state: { loading: logsLoading, error: logsError },
       set: setLogs,
       fetch: async (moduleId?: string) => {
-        if (!moduleId) {
-          return await fetchLogs("/logs")
+        if (accessToken.token) {
+          if (!moduleId) {
+            await fetchLogs("/logs", accessToken.token)
+          } else {
+            await fetchLogs(
+              "/logs",
+              accessToken.token,
+              undefined,
+              { _append: ["module", "user"], moduleId }
+            )
+          }
+
         }
-        return await fetchLogs(
-          "/logs",
-          undefined,
-          { _expandA: ["module", "user"], moduleId }
-        )
       },
       filters: {
         value: {
@@ -276,6 +336,20 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
             logs: logs.filter(predicate)
           }))
         setFilteredModules(fm)
+      }
+    },
+    userInfo: {
+      data: userInfo,
+      state: { loading: userInfoLoading, error: userInfoError },
+      fetch: async (userId) => {
+        if (accessToken.token) {
+          await fetchUserInfo(
+            "/users/:userId",
+            accessToken.token,
+            { userId },
+            { _append: 'enterprise' }
+          )
+        }
       }
     }
   }),
@@ -305,15 +379,22 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       password,
       passwordLoading,
       passwordError,
-      logsFilters
+      logsFilters,
+      userInfoData,
+      userInfoError,
+      userInfoLoading,
+      accessToken.token
     ])
 
   useEffect(() => {
-    fetchUsers("/users?_expand=enterprise")
-    fetchCities("/cities")
-    fetchEvents("/events")
-    fetchModules("/modules?_embed=logs")
-  }, [])
+    console.log(accessToken.token)
+    if (accessToken.token !== null) {
+      fetchUsers("/users", accessToken.token, undefined, { _append: "enterprise" })
+      fetchCities("/cities", accessToken.token)
+      fetchEvents("/events", accessToken.token)
+      fetchModules("/modules", accessToken.token, undefined, { _join: "logs" })
+    }
+  }, [accessToken.token])
 
   useEffect(() => {
     if (usersData) {
@@ -362,6 +443,12 @@ const AppContextProvider = ({ children }: { children: ReactNode }) => {
       setModules(modulesData)
     }
   }, [modulesData])
+
+  useEffect(() => {
+    if (userInfoData) {
+      setUserInfo(userInfoData)
+    }
+  }, [userInfoData])
 
   return (
     <AppContext.Provider value={value}>

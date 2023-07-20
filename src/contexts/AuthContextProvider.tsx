@@ -1,15 +1,20 @@
 import { Amplify, Auth } from 'aws-amplify';
-import { CognitoUser } from 'amazon-cognito-identity-js';
-import { createContext, ReactNode, useMemo, useState } from 'react';
-import { User } from '../models/User';
+import { CognitoUser, CognitoUserSession } from 'amazon-cognito-identity-js';
+import {
+  createContext,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useState
+} from 'react';
 
 Amplify.configure({
   Auth: {
-    identityPoolId: "us-east-1:12c9962b-8973-4f7d-b1ce-b667f563ffac",
-    region: "us-east-1",
-    userPoolId: "us-east-1_oud83NQk8",
-    clientId: "69qusms538vl3b99tovn5fr8mp",
-    userPoolWebClientId: "69qusms538vl3b99tovn5fr8mp"
+    identityPoolId: import.meta.env.VITE_COGNITO_IG_ID,
+    userPoolId: import.meta.env.VITE_COGNITO_POOL_ID,
+    clientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
+    userPoolWebClientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
+    storage: window.sessionStorage
   }
 })
 
@@ -34,26 +39,39 @@ export interface AuthError {
 }
 
 export interface UserSession {
-  token: {
-    id?: string
-    access?: string,
-    refresh?: string
-  }
-  user: User | null
+  cognitoUser: CognitoUser | null
+  userLoading: boolean
+  userError: string | null
+}
+
+export interface AccessTokenState {
+  tokenLoading: boolean
+  tokenError: string | null
+  token: string | null
 }
 
 export interface AuthContextValue {
-  currentUser: () => Promise<UserSession | null>
   signIn: (username: string, password: string) => Promise<AuthResponse>
-  signOut: () => Promise<void>,
+  signOut: () => Promise<void>
+  current: UserSession
+  accessToken: AccessTokenState
   authState: AuthState,
   authError: AuthError
 }
 
 export const AuthContext = createContext<AuthContextValue>({
-  currentUser: async () => { return null },
   signIn: async () => ({ status: AuthStatus.FAIL }),
   signOut: async () => { },
+  current: {
+    cognitoUser: null,
+    userError: null,
+    userLoading: true
+  },
+  accessToken: {
+    tokenError: null,
+    tokenLoading: true,
+    token: null
+  },
   authState: {
     isSigningIn: false,
     isSigningOut: false
@@ -65,46 +83,46 @@ export const AuthContext = createContext<AuthContextValue>({
 })
 
 const AuthContextProvider = ({ children }: { children: ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<UserSession | null>(null)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isSigningIn, setIsSigningIn] = useState(false)
   const [signInError, setSignInError] = useState<string | null>(null)
   const [signOutError, setSignOutError] = useState<string | null>(null)
+
+  const [tokenLoading, setTokenLoading] = useState<boolean>(true)
+  const [tokenError, setTokenError] = useState<string | null>(null)
+  const [token, setToken] = useState<string | null>(null)
+
+  const [cognitoUser, setCognitoUser] = useState<CognitoUser | null>(null)
+  const [userLoading, setUserLoading] = useState<boolean>(true)
+  const [userError, setUserError] = useState<string | null>(null)
+
   const value = useMemo<AuthContextValue>(() => ({
-    currentUser: async () => {
-      const _authUser = await Auth.currentAuthenticatedUser()
-      return _authUser
+    current: {
+      cognitoUser,
+      userLoading,
+      userError
+    },
+    accessToken: {
+      tokenError,
+      tokenLoading,
+      token
     },
     signIn: async (username, password): Promise<AuthResponse> => {
       let authResponse: AuthResponse = { status: AuthStatus.FAIL }
       try {
+        setSignInError(null)
         setIsSigningIn(true)
         const user = await Auth.signIn(username, password) as CognitoUser
-        const userSession = await Auth.userSession(user)
-        const id = (await Auth.userAttributes(user)).find(e => e.Name === 'sub')?.Value!
-        const res = await fetch(`/users/${id}`)
-        if (!res.ok) {
-          throw new Error("No se pudo iniciar sesión porque no se pudo obtener la información del usuario.")
-        }
-        const userData = await res.json() as User
-
-        if (user) {
-          setCurrentUser({
-            token: {
-              id: userSession.getIdToken().getJwtToken(),
-              access: userSession.getAccessToken().getJwtToken(),
-              refresh: userSession.getRefreshToken().getToken()
-            },
-            user: userData
-          })
-        }
 
         authResponse = {
           status: AuthStatus.OK
         }
       } catch (error) {
-        if ((error as Error).message === "Incorrect username or password.") {
+        const _error = error as Error
+        if (_error.message === "Incorrect username or password.") {
           setSignInError("Usuario o contraseña incorrectos.")
+        } else {
+          setSignInError(`${_error.name} ${_error.message}`)
         }
 
         setIsSigningIn(false)
@@ -137,12 +155,50 @@ const AuthContextProvider = ({ children }: { children: ReactNode }) => {
       signOut: signOutError
     }
   }), [
-    currentUser,
     isSigningOut,
     isSigningIn,
     signInError,
-    signOutError
+    signOutError,
+    token,
+    tokenLoading,
+    tokenError,
+    cognitoUser,
+    userLoading,
+    userError
   ])
+
+  useEffect(() => {
+    const getAccessToken = async () => {
+      try {
+        setTokenLoading(true)
+        setTokenError(null)
+        const _session = await Auth.currentSession() as CognitoUserSession
+        console.log(_session)
+        setToken(_session.getAccessToken().getJwtToken())
+      } catch (err) {
+        setTokenError((err as Error).message)
+      } finally {
+        setTokenLoading(false)
+      }
+    }
+
+    const getUser = async () => {
+      try {
+        setUserLoading(true)
+        setUserError(null)
+        const _user = await Auth.currentAuthenticatedUser() as CognitoUser
+        console.log(_user)
+        setCognitoUser(_user)
+      } catch (err) {
+        setUserError((err as Error).message)
+      } finally {
+        setUserLoading(false)
+      }
+    }
+
+    getUser()
+    getAccessToken()
+  }, [])
 
   return (
     <AuthContext.Provider value={value}>

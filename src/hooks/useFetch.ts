@@ -8,7 +8,7 @@ export interface ApiResponse<T> {
   data: T | null,
   loading: boolean,
   error: string | null,
-  fetchData: (e: string, p?: Param, q?: Query) => Promise<void>
+  fetchData: (e: string, jwt: string, p?: Param, q?: Query) => Promise<void>
 }
 
 const queryConverter = (record: Query) => (
@@ -27,30 +27,38 @@ const queryConverter = (record: Query) => (
 
 const useFetch = <T>(): ApiResponse<T> => {
   const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchData = async (endpoint: string, param?: Param, query?: Query) => {
+  const fetchData = async (endpoint: string, jwt: string, param?: Param, query?: Query) => {
     try {
-      setLoading(true)
+      //setLoading(true)
+      setError(null)
       const queryString = query &&
-        Object.entries(query).length ? `?${new URLSearchParams(queryConverter(query)).toString()}` : ''
+      Object.entries(query).length ? `?${new URLSearchParams(queryConverter(query)).toString()}` : ''
       const newEndpoint = param ? endpoint.replace(/:([a-zA-Z]+)/g, (match, key) => param[key] || match) : endpoint
       const url = `${BASE_URL_API}${newEndpoint}${queryString}`
-      const res = await fetch(url)
+      // console.log(url)
+      const init = jwt ? {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwt}`
+        }
+      } as RequestInit : undefined
+      
+      console.log({url, jwt})
+      const res = await fetch(url, init)
 
       if (!res.ok) {
         throw new Error(`${res.status} ${res.statusText}`)
       }
       const data: T = await res.json()
-      setError(null)
       setData(data)
     } catch (error) {
       if (error instanceof Error) {
         if (error.message === 'Failed to fetch') {
           setError('No se pudo conectar al servidor. Por favor, revise su conexión de red.')
         } else {
-          setError(error.message)
           setError(error.message)
         }
         setData(null)

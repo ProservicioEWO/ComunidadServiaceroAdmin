@@ -6,6 +6,7 @@ export type ToastType = "success" | "error" | "warning" | "info"
 export type ToastFunc = (description: string) => void
 
 export interface CustomToastContext {
+  closeAll: () => void
   successToast: ToastFunc
   errorToast: ToastFunc
 }
@@ -25,6 +26,7 @@ const useCustomToast = (): CustomToastContext => {
     }, [toast])
 
   return {
+    closeAll: () => toast.closeAll(),
     successToast: showToast("success", 'bottom', 'Genial!'),
     errorToast: showToast("error", 'bottom-right', '¡Oh no!')
   }

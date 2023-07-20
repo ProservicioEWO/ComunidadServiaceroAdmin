@@ -16,6 +16,7 @@ import {
   SlideFade,
   Text,
   theme,
+  Tooltip,
   VStack
 } from '@chakra-ui/react';
 import { getRndScheme, hexFromColorScheme } from '../shared/utils';
@@ -46,6 +47,8 @@ const Login = () => {
 
   const handleLogin = async ({ username, password }: LoginValues) => {
     const res = await signIn(username, password)
+    console.log("###########", res);
+    
     if (res.status === AuthStatus.OK) {
       navigate("/admin")
     }
@@ -69,6 +72,7 @@ const Login = () => {
       display="flex"
       justifyContent="center"
       alignItems="center"
+      overflow="hidden"
       bg="gray.100"
     >
       <SlideFade in={isMounted} offsetY="-100px">
@@ -103,7 +107,7 @@ const Login = () => {
                     borderLeft={`5px solid ${hexFromColorScheme(colorScheme)}`}
                     shadow="md"
                     {...register("username", { required: true })} />
-                  <FormErrorMessage>Introduce una contraseña para poder iniciar sesión</FormErrorMessage>
+                  <FormErrorMessage>Introduce tu nombre de usuario</FormErrorMessage>
                   <FormHelperText color="gray.400">
                     Usuario de comunidad serviacero.
                   </FormHelperText>
@@ -117,7 +121,7 @@ const Login = () => {
                     borderLeft={`5px solid ${hexFromColorScheme(colorScheme)}`}
                     shadow="md"
                     {...register("password", { required: true })} />
-                  <FormErrorMessage>Introduce una contraseña para poder iniciar sesión</FormErrorMessage>
+                  <FormErrorMessage>Introduce tu contraseña</FormErrorMessage>
                 </FormControl>
                 <Button
                   type="submit"

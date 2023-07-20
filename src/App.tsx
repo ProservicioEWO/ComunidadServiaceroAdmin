@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { CourseDetailView, CourseSectionDetailView } from './components/courses';
 import EventsDetailView from './components/gallery/EventsDetailView';
 import { LocationDetailView } from './components/locations';
@@ -7,6 +7,8 @@ import SectionIndex from './components/SectionIndex';
 import StatisticsUserDetail from './components/statitistics/StatisticsUserDetail';
 import StatitisticsDetails, { StatsParams } from './components/statitistics/StatitisticsDetails';
 import UserDetailView from './components/users/UserDetailView';
+import Authorize from './guards/Authorize';
+import Redirect from './guards/Redirect';
 import useAppHeaderContext from './hooks/useAppHeaderContext';
 import {
   CSBuilding,
@@ -24,6 +26,7 @@ import Locations from './pages/Locations';
 import Login from './pages/Login';
 import NotFound from './pages/NotFound';
 import Statitistics from './pages/Statitistics';
+import Test from './pages/Test';
 import Users from './pages/Users';
 
 
@@ -49,9 +52,14 @@ const App = () => {
 
   return (
     <Routes>
-      <Route path="admin" element={<Dashboard />}>
+      <Route path="admin" element={
+        <Authorize>
+          <Dashboard />
+        </Authorize>
+      }>
+        <Route index element={<Navigate to='users' />} />
         <Route path="users" element={<Users />}>
-          <Route path=':userId' element={<UserDetailView />} />
+          <Route index path=':userId' element={<UserDetailView />} />
         </Route>
         <Route path='locations' element={<Locations />}>
           <Route index element={<SectionIndex message='Selecciona una ciudad para administrar las instalaciones' />} />
@@ -75,9 +83,16 @@ const App = () => {
             <Route index path=':userId' element={<StatisticsUserDetail />} />
           </Route>
         </Route>
+        <Route path='test' element={<Test />} />
         <Route path='*' element={<NotFound />} />
       </Route>
-      <Route path='login' element={<Login />}></Route>
+      <Route
+        path='login'
+        element={<Redirect>
+          <Login />
+        </Redirect>
+        } />
+      <Route path='*' element={<NotFound />} />
     </Routes>
   )
 }

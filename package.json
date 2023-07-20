@@ -5,11 +5,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "devhost": "vite --host",
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@aws-amplify/ui-react": "^5.0.4",
+    "@aws-sdk/client-cognito-identity-provider": "^3.369.0",
     "@aws-sdk/client-s3": "^3.341.0",
     "@chakra-ui/icons": "^2.0.18",
     "@chakra-ui/react": "^2.5.1",
@@ -29,9 +30,9 @@
     "amazon-cognito-identity-js": "^6.3.1",
     "apexcharts": "^3.41.0",
     "aws-amplify": "^5.3.3",
-    "aws-sdk": "^2.1386.0",
     "framer-motion": "^10.2.4",
     "localforage": "^1.10.0",
+    "lottie-react": "^2.4.0",
     "match-sorter": "^6.3.1",
     "moment": "^2.29.4",
     "primereact": "^9.6.0",

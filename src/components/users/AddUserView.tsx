@@ -36,11 +36,11 @@ export interface AddUserFormValues {
   enterpriseId: number
 }
 
-const createUserFromValues = (id: UUID, values: AddUserFormValues): NewUser => ({id, ...values })
+const createUserFromValues = (id: UUID, values: AddUserFormValues): NewUser => ({ id, ...values })
 
 const AddUserView = () => {
   const { errorToast, successToast } = useCustomToast()
-  const { newId, users } = useAppContext()
+  const { newId, users, _accessToken } = useAppContext()
   const [entities, setEntitites] = useState<string[]>([])
   const { insertData, error: insertError } = useInsertData<NewUser>()
   const { data, loading, error: fetchError, fetchData: fetchEnt } = useFetch<Enterprise[]>()
@@ -51,7 +51,7 @@ const AddUserView = () => {
       const newUser = createUserFromValues(newId, values)
       const ok = await insertData("/users", newUser)
       if (ok) {
-        users.set([...(users.get ?? []), {...newUser, enterprise}])
+        users.set([...(users.get ?? []), { ...newUser, enterprise }])
         successToast("Se ha insertado el usuario con exito")
         reset()
       }
@@ -63,8 +63,10 @@ const AddUserView = () => {
   }
 
   useEffect(() => {
-    fetchEnt("/enterprises")
-  }, [])
+    if (_accessToken.token) {
+      fetchEnt("/enterprises", _accessToken.token)
+    }
+  }, [_accessToken.token])
 
   useEffect(() => {
     if (insertError) {

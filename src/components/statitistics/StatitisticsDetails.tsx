@@ -55,13 +55,16 @@ const StatitisticsDetails = () => {
         events: {
           dataPointSelection(_e, chart, options) {
             const category = chart.w.config.xaxis.categories[options.dataPointIndex]
+            console.log(">_", category)
             const user = users.get?.find(({ username }) => username === category)
             if (user) {
-              console.log(user)
               navigate(user.id)
             } else {
               errorToast("Ocurrió un problema obteniendo los detalles del usuario.")
             }
+            (async () => {
+              setTimeout(() => { }, 300)
+            })()
           }
         }
       },
@@ -113,18 +116,21 @@ const StatitisticsDetails = () => {
       new Date(date) >= new Date(logs.filters.value.dateStart) &&
       new Date(date) <= new Date(logs.filters.value.dateEnd)
     )) ?? []
-    const dataExport = logList.map<DataExcelRow>(e => ({
-      id: e.id,
-      username: e.user.username,
-      date: e.date,
-      module: e.module.name,
-      type: e.user.type
+    const dataExport = logList.map<DataExcelRow>(({id, date, module, user}) => ({
+      id: id,
+      username: user.username,
+      date: date,
+      module: module.name,
+      type: user.type
     }))
 
     setDataToExport(dataExport)
 
     const groupedLogList = logList.reduce<Grouped<Log>>(
       (result, log) => {
+
+        console.log(log)
+
         if (!result[log.user.username]) {
           result[log.user.username] = []
         }
@@ -133,23 +139,14 @@ const StatitisticsDetails = () => {
       }, {}
     )
 
+    console.log(groupedLogList)
+
     setData(prevData => ({
       ...prevData,
       options: {
         ...prevData.options,
         chart: {
-          ...prevData.options.chart,
-          events: {
-            dataPointSelection(_e, chart, options) {
-              const category = chart.w.config.xaxis.categories[options.dataPointIndex]
-              const user = users.get?.find(({ username }) => username === category)
-              if (user) {
-                navigate(user.id)
-              } else {
-                errorToast("Ocurrió un problema obteniendo los detalles del usuario.")
-              }
-            }
-          }
+          ...prevData.options.chart
         },
         xaxis: {
           ...prevData.options.xaxis,

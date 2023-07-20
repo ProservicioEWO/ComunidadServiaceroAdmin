@@ -1,24 +1,12 @@
 import App from './App';
 import AppHeaderContextProvider from './contexts/AppHeaderContextProvider';
+import AuthContextProvider from './contexts/AuthContextProvider';
+import PrimeCSSProvider from './shared/PrimeCSSProvider';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ChakraProvider, extendTheme } from '@chakra-ui/react';
 import { PrimeReactProvider } from 'primereact/api';
-import { Amplify, Auth } from 'aws-amplify';
-import AuthContextProvider from './contexts/AuthContextProvider';
-import PrimeCSSProvider from './shared/PrimeCSSProvider';
-
-Amplify.configure({
-  Auth: {
-    identityPoolId: "us-east-1:12c9962b-8973-4f7d-b1ce-b667f563ffac",
-    region: "us-east-1",
-    userPoolId: "us-east-1_oud83NQk8",
-    clientId: "69qusms538vl3b99tovn5fr8mp",
-    userPoolWebClientId: "69qusms538vl3b99tovn5fr8mp",
-    authenticationFlowType: 'USER_PASSWORD_AUTH'
-  }
-})
 
 const activeLabelStyles = {
   transform: "scale(0.85) translateY(-25px)",
@@ -141,18 +129,18 @@ const comunidadTheme = extendTheme({
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <AuthContextProvider>
-      <ChakraProvider theme={comunidadTheme}>
-        <PrimeReactProvider>
-          <PrimeCSSProvider>
+    <ChakraProvider theme={comunidadTheme}>
+      <PrimeReactProvider>
+        <PrimeCSSProvider>
+          <BrowserRouter>
             <AppHeaderContextProvider>
-              <BrowserRouter>
+              <AuthContextProvider>
                 <App />
-              </BrowserRouter>
+              </AuthContextProvider>
             </AppHeaderContextProvider>
-          </PrimeCSSProvider>
-        </PrimeReactProvider>
-      </ChakraProvider>
-    </AuthContextProvider>
+          </BrowserRouter>
+        </PrimeCSSProvider>
+      </PrimeReactProvider>
+    </ChakraProvider>
   </React.StrictMode>,
 )

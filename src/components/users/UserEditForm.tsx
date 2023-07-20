@@ -25,6 +25,7 @@ import {
 } from '@chakra-ui/react';
 import { InputChangeEvent } from '../../shared/typeAlias';
 import { useForm } from 'react-hook-form';
+import useAppContext from '../../hooks/useAppContext';
 
 export interface UserEditFormProps {
   formRef: RefObject<HTMLFormElement>
@@ -36,6 +37,7 @@ export interface UserEditFormProps {
 }
 
 const UserEditForm = ({ formRef, data, user, userId, setIsLoading, onSuccess }: UserEditFormProps) => {
+  const {_accessToken} = useAppContext()
   const { errorToast } = useCustomToast()
   const [entities, setEntitites] = useState<string[]>([])
   const {
@@ -67,8 +69,10 @@ const UserEditForm = ({ formRef, data, user, userId, setIsLoading, onSuccess }: 
   }
 
   useEffect(() => {
-    fetchEnt("/enterprises")
-  }, [])
+    if(_accessToken.token){
+      fetchEnt("/enterprises", _accessToken.token)
+    }
+  }, [_accessToken.token])
 
   useEffect(() => {
     setIsLoading(isSubmitting)
