@@ -83,7 +83,7 @@ const BannerView = () => {
         <GalleryGrid<{ key?: string, url: string }>
           isLoading={imageListState.loading}
           list={imageListState.data}
-          emptyMessage="Agrega imágenes al evento."
+          emptyMessage="Agrega imágenes a la galeria."
           mapName={({ key }) => key?.split("/").pop() ?? ""}
         >
           {
