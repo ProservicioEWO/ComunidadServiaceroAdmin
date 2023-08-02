@@ -1,23 +1,25 @@
-import loginAnimation from '../../src/lotties/login_lottie.json';
-import Lottie from 'lottie-react';
-import useAuthContext from '../hooks/useAuthContext';
-import { AbsoluteCenter, Box, VStack } from '@chakra-ui/react';
 import { Navigate } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import LoadingSpinner from '../components/LoadingSpinner';
+import useAuthContext from '../hooks/useAuthContext';
 
 export interface AuthorizeProps {
   children: JSX.Element
 }
 
 const Authorize = ({ children }: AuthorizeProps) => {
-  const { current } = useAuthContext()
+  const {
+    isBusy,
+    authSessionData: { isAuthenticated }
+  } = useAuthContext()
 
-  useEffect(() => {
-    console.log(current)
-  }, [])
+  if (isBusy) {
+    return (
+      <LoadingSpinner />
+    )
+  }
 
   return (
-    !current.cognitoUser ?
+    !isAuthenticated ?
       <Navigate to='/login' /> :
       children
   )

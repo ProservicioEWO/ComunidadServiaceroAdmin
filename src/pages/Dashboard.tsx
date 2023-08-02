@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react"
-import AppContextProvider from "../contexts/AppContextProvider"
-import useAuthContext from "../hooks/useAuthContext"
-import MainLayout from "../shared/MainLayout"
+import AppContextProvider from '../contexts/AppContextProvider';
+import MainLayout from '../shared/MainLayout';
+import useAuthContext from '../hooks/useAuthContext';
 
 const Dashboard = () => {
-  const { accessToken } = useAuthContext()
-  const [currentAccessToken, setCurrentAccessToken] = useState<string | null>("")
+  const {
+    authSessionData
+  } = useAuthContext()
 
   return (
-    <AppContextProvider accessToken={accessToken}>
+    <AppContextProvider sessionData={authSessionData}>
       <MainLayout />
     </AppContextProvider>
   )

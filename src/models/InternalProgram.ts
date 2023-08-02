@@ -2,9 +2,12 @@ import { Program } from "./Program"
 
 export interface InternalProgram extends Program {
   date: string
-  duration: number
+  end: string
+  duration: string
   schedule: string
   plan: string
   req: string
   locationId: string
+  auto: boolean
+  color: string
 }

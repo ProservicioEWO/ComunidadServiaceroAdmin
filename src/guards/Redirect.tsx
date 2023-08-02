@@ -1,22 +1,30 @@
-import { useEffect } from "react"
-import { Navigate } from "react-router-dom"
-import useAuthContext from "../hooks/useAuthContext"
+import useAuthContext from '../hooks/useAuthContext';
+import { Navigate } from 'react-router-dom';
+import { ProgressSpinner } from 'primereact/progressspinner';
+import { useEffect } from 'react';
+import { AbsoluteCenter, Box } from '@chakra-ui/react';
+import Loading from '../components/LoadingSpinner';
 
 export interface RedirectProps {
   children: JSX.Element
   redir?: string
 }
 
-const Redirect = ({ children}: RedirectProps) => {
-  const { current } = useAuthContext()
+const Redirect = ({ children }: RedirectProps) => {
+  const {
+    isBusy,
+    authSessionData: { isAuthenticated }
+  } = useAuthContext()
 
-  useEffect(() => {
-    console.log(current)
-  }, [])
+  if (isBusy) {
+    return (
+      <Loading />
+    )
+  }
 
   return (
-    current.cognitoUser ?
-      <Navigate to='/admin' /> :
+    isAuthenticated ?
+      <Navigate to='/' /> :
       children
   )
 }

@@ -15,10 +15,8 @@ import {
   PopoverTrigger,
   Tooltip,
   UnorderedList,
-  useBoolean,
   useDisclosure
 } from '@chakra-ui/react';
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 
 export interface NewLocationValue {
@@ -34,11 +32,13 @@ export interface AddLocationFormProps {
 const AddLocationForm = ({ onAdd, isLoading }: AddLocationFormProps) => {
   const { isOpen, onToggle, onClose } = useDisclosure()
   const { reset, register, handleSubmit, formState: { errors } } = useForm<NewLocationValue>()
+  
   const onSubmit = async (data: NewLocationValue) => {
     await onAdd(data)
     reset()
     onClose()
   }
+  
   return (
     <Popover isLazy isOpen={isOpen} onClose={onClose}>
       <PopoverTrigger>
@@ -74,16 +74,16 @@ const AddLocationForm = ({ onAdd, isLoading }: AddLocationFormProps) => {
                     _focus={{ bg: "gray.50" }}
                     focusBorderColor='transparent'
                     border='none'
-                    {...register("alias", { required: true, pattern: /^[A-Z]{3}$/ })}
-                    placeholder='Alias' />
+                    placeholder='Alias'
+                    {...register("alias", { required: true, pattern: /^[A-Z]{3}$/ })} />
                 </FormControl>
                 <FormControl isInvalid={!!errors.name}>
                   <Input
                     _focus={{ bg: "gray.50" }}
                     focusBorderColor='transparent'
                     border='none'
-                    {...register("name", { required: true })}
-                    placeholder='Nombre' />
+                    placeholder='Nombre'
+                    {...register("name", { required: true })} />
                 </FormControl>
                 <InputRightElement>
                   <IconButton

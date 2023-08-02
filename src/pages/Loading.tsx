@@ -19,12 +19,9 @@ const Loading = () => {
       display="flex"
       justifyContent="center"
       alignItems="center">
-      <VStack>
-        <HashLoader
-          size={65}
-          color={color} />
-        <Text fontSize="sm">Cargando...</Text>
-      </VStack>
+      <HashLoader
+        size={65}
+        color={color} />
     </Box>
   )
 }

@@ -9,9 +9,11 @@ import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { NewLocationValue } from './locations/AddLocationForm';
 import { useEffect } from 'react';
 import { VStack } from '@chakra-ui/react';
+import useAuthContext from '../hooks/useAuthContext';
 
 const CitiesView = () => {
   const navigate = useNavigate()
+  const { authSessionData: { accessToken } } = useAuthContext()
   const { newId, cities } = useAppContext()
   const { cityId } = useParams<LocationParams>()
   const { errorToast, successToast } = useCustomToast()
@@ -19,20 +21,26 @@ const CitiesView = () => {
   const { insertData, loading: inserting, error: insertError } = useInsertData<City>()
 
   const handleDelete = async (id: string | number) => {
-    const ok = await deleteData("/cities", id)
+    const ok = await deleteData("/cities", id, {
+      jwt: accessToken!
+    })
+
     if (ok) {
       successToast("Se eliminó ciudad con éxito")
       const newDatalist = cities.get?.filter(e => e.id !== id)
       cities.set(newDatalist ?? [])
       if (cityId && String(id) === cityId) {
-        navigate(`/admin/locations`)
+        navigate(`/locations`)
       }
     }
   }
 
   const handleAdd = async (newLocation: NewLocationValue) => {
-    const newCity = { ...newLocation, id: newId, count: 0 }
-    const ok = await insertData("/cities", newCity)
+    const newCity = { ...newLocation, id: newId } as City
+    const ok = await insertData("/cities", newCity, {
+      jwt: accessToken!,
+      method: 'PUT'
+    })
     if (ok) {
       successToast("Se creó la nueva ciudad con éxito")
       cities.set([...cities.get ?? [], newCity])
@@ -59,12 +67,11 @@ const CitiesView = () => {
         isLoading={cities.state.loading}
         dataList={cities.get} >
         {
-          ({ id, name, count }) => (
+          ({ id, name }) => (
             <NavLink to={String(id)}>
               {
                 ({ isActive }) => (
                   <LocationMenuListItem
-                    counter={count}
                     text={name}
                     isActive={isActive}
                     isLoading={deleting}

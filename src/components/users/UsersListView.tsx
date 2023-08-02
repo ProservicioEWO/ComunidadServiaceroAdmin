@@ -3,12 +3,13 @@ import DataListItem from '../DataListItem';
 import useAppContext from '../../hooks/useAppContext';
 import useCustomToast from '../../hooks/useCustomToast';
 import useDeleteData from '../../hooks/useDelete';
-import { Box, HStack, Image, Text } from '@chakra-ui/react';
+import { HStack, Image, Spinner, Text } from '@chakra-ui/react';
 import { InputChangeEvent } from '../../shared/typeAlias';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 import { User } from '../../models/User';
 import { UserDetailParams } from './UserDetailView';
+import useAuthContext from '../../hooks/useAuthContext';
 
 const filterCallback = (search: string) => {
   const regex = new RegExp(`^${search}[\\s\\w]*`)
@@ -19,22 +20,29 @@ const filterCallback = (search: string) => {
 
 const UsersListView = () => {
   const navigate = useNavigate()
-  const [search, setSearch] = useState("")
+  const { isBusy, authSessionData: { accessToken } } = useAuthContext()
   const { users } = useAppContext()
+  const [search, setSearch] = useState("")
   const { userId } = useParams<UserDetailParams>()
   const { successToast, errorToast } = useCustomToast()
   const { loading: deleteLoading, error: deleteError, deleteData } = useDeleteData()
+  
   const handleSearch = useCallback(({ target: { value } }: InputChangeEvent) => setSearch(value), [])
+  
   const handleFilter = useCallback(filterCallback(search), [search])
+  
   const handleDeleteUser = async (itemId: string | number) => {
-    const ok = await deleteData("/users", itemId)
+    const ok = await deleteData("/users", itemId, {
+      jwt: accessToken!
+    })
+
     if (ok) {
       const newDataList = users.get?.filter(e => e.id !== itemId)
       if (newDataList) {
         users.set([...newDataList])
         successToast("Se eliminó el usuario con éxito.")
         if (userId && String(itemId) === userId) {
-          navigate(`/admin/users`)
+          navigate(`/users`)
         }
       }
     }
@@ -49,6 +57,10 @@ const UsersListView = () => {
       errorToast(deleteError)
     }
   }, [deleteError, users.state.error])
+
+  // if (users.state.loading || isBusy) {
+  //   return <Spinner/>
+  // }
 
   return (
     <DataList<User>

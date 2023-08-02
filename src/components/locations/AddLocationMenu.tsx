@@ -1,7 +1,5 @@
-import Dropzone from 'react-dropzone';
-import useCustomToast from '../../hooks/useCustomToast';
-import useInsertData from '../../hooks/useInsertData';
-import { AddIcon, DownloadIcon } from '@chakra-ui/icons';
+import DropzoneComponent from './DropzoneComponent';
+import { AddIcon } from '@chakra-ui/icons';
 import {
   AlertDialog,
   AlertDialogBody,
@@ -19,9 +17,9 @@ import {
   useDisclosure,
   VStack
 } from '@chakra-ui/react';
-import { Location } from '../../models/Location';
+import { BiImageAlt } from 'react-icons/bi';
+import { Controller, useForm } from 'react-hook-form';
 import { useEffect, useRef } from 'react';
-import { useForm } from 'react-hook-form';
 
 export interface AddLocationFormValues {
   id: string
@@ -31,37 +29,23 @@ export interface AddLocationFormValues {
 
 export interface AddLocationMenuProps {
   nextId: string
-  cityId: string
+  loading: boolean
   isDisabled?: boolean
-  toData: Location[] | null
+  onAdd: (values: AddLocationFormValues) => Promise<void>
 }
 
-const AddLocationMenu = ({ nextId, cityId, toData, isDisabled = false }: AddLocationMenuProps) => {
-  const { errorToast, successToast } = useCustomToast()
+const AddLocationMenu = ({ nextId, loading, onAdd, isDisabled = false }: AddLocationMenuProps) => {
   const {
-    error,
-    loading,
-    insertData
-  } = useInsertData<Location>()
-  const {
+    control,
+    formState: { errors },
     handleSubmit,
     register,
-    reset,
-    formState: { errors }
+    reset
   } = useForm<AddLocationFormValues>()
   const { isOpen, onOpen, onClose } = useDisclosure()
   const cancelRef = useRef(null)
   const formRef = useRef<HTMLFormElement>(null)
-  const handleAddLocation = async ({ name, id }: AddLocationFormValues) => {
-    if (toData) {
-      const newLoc = { id, name, cityId: cityId ?? "" }
-      const ok = await insertData("/locations", newLoc)
-      if (ok) {
-        successToast("Se agregó la nueva instalación con éxito")
-        onClose()
-      }
-    }
-  }
+
   const handleClick = () => {
     formRef.current?.dispatchEvent(new Event("submit", {
       cancelable: true,
@@ -69,15 +53,16 @@ const AddLocationMenu = ({ nextId, cityId, toData, isDisabled = false }: AddLoca
     }))
   }
 
-  useEffect(() => {
-    if (error) {
-      errorToast("Ocurrió un error insertando la instalación. Por favor, inténtalo más tarde.")
-    }
+  const handleOnAdd = async (values: AddLocationFormValues) => {
+    await onAdd(values)
+    onClose()
+  }
 
+  useEffect(() => {
     reset({
       id: nextId
     })
-  }, [nextId, error])
+  }, [nextId])
 
   return (
     <>
@@ -103,7 +88,7 @@ const AddLocationMenu = ({ nextId, cityId, toData, isDisabled = false }: AddLoca
               Configuración de instalación
             </AlertDialogHeader>
             <AlertDialogBody>
-              <form ref={formRef} onSubmit={handleSubmit(handleAddLocation)}>
+              <form ref={formRef} onSubmit={handleSubmit(handleOnAdd)}>
                 <VStack align='stretch'>
                   <HStack>
                     <Text fontSize='sm' fontWeight='bold'>Id:</Text>
@@ -119,27 +104,21 @@ const AddLocationMenu = ({ nextId, cityId, toData, isDisabled = false }: AddLoca
                       El nombre de la intalación es requerido"
                     </FormErrorMessage>
                   </FormControl>
-                  <Dropzone onDrop={acceptedFiles => console.log(acceptedFiles)}>
-                    {
-                      ({ getRootProps, getInputProps }) => (
-                        <Flex
-                          justify='center'
-                          border='2px dashed'
-                          borderColor={errors.file ? 'red.500' : 'gray.300'}
-                          borderRadius='md'
-                          px={3}
-                          py={8}>
-                          <div {...getRootProps()}>
-                            <input {...getInputProps()} {...register("file")} />
-                            <VStack>
-                              <DownloadIcon fontSize='2xl' transform='rotate(180deg)' />
-                              <Text>Subir imagen</Text>
-                            </VStack>
-                          </div>
-                        </Flex>
-                      )
-                    }
-                  </Dropzone>
+                  <Controller
+                    name="file"
+                    control={control}
+                    render={({ field }) => (
+                      <DropzoneComponent
+                        placeholder='Subir imagen'
+                        icon={BiImageAlt}
+                        maxFiles={1}
+                        multiple={false}
+                        accept={{
+                          'image/jpeg': ['.jpeg', '.jpg'],
+                          'image/png': ['.png']
+                        }}
+                        onDrop={field.onChange} />
+                    )} />
                 </VStack>
               </form>
             </AlertDialogBody>

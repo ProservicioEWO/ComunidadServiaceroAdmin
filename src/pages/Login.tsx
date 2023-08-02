@@ -1,4 +1,3 @@
-import useCustomToast from '../hooks/useCustomToast';
 import {
   Box,
   Button,
@@ -15,17 +14,16 @@ import {
   Input,
   SlideFade,
   Text,
-  theme,
-  Tooltip,
-  VStack
+  theme, VStack
 } from '@chakra-ui/react';
-import { getRndScheme, hexFromColorScheme } from '../shared/utils';
-import { HiOutlineArrowRight } from 'react-icons/hi';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
+import { HiOutlineArrowRight } from 'react-icons/hi';
 import { useNavigate } from 'react-router-dom';
-import useAuthContext from "../hooks/useAuthContext"
-import { AuthStatus } from '../contexts/AuthContextProvider';
+import useAuthContext from "../hooks/useAuthContext";
+import useCustomToast from '../hooks/useCustomToast';
+import { BASE_URL_IMG_CDN } from '../shared/cs-constants';
+import { getRndScheme, hexFromColorScheme } from '../shared/utils';
 
 export interface LoginValues {
   username: string
@@ -34,7 +32,12 @@ export interface LoginValues {
 
 const Login = () => {
   const navigate = useNavigate()
-  const { signIn, authState, authError } = useAuthContext()
+  const {
+    isBusy,
+    hasError,
+    authSessionData: { isAuthenticated },
+    signIn
+  } = useAuthContext()
   const { errorToast } = useCustomToast()
   const [isHover, setIsHover] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
@@ -47,11 +50,6 @@ const Login = () => {
 
   const handleLogin = async ({ username, password }: LoginValues) => {
     const res = await signIn(username, password)
-    console.log("###########", res);
-    
-    if (res.status === AuthStatus.OK) {
-      navigate("/admin")
-    }
   }
 
   useEffect(() => {
@@ -60,10 +58,10 @@ const Login = () => {
   }, [])
 
   useEffect(() => {
-    if (authError.signIn) {
-      errorToast(authError.signIn)
+    if (hasError) {
+      errorToast(hasError)
     }
-  }, [authError.signIn])
+  }, [hasError])
 
   return (
     <Box
@@ -87,7 +85,7 @@ const Login = () => {
           <Center pb={5}>
             <Image
               width={120}
-              src="https://cs-static-res.s3.amazonaws.com/_public/images/cs_lg.png"
+              src={`${BASE_URL_IMG_CDN}/cs_lg.png`}
               alt='comunidad-isotipo'
             />
           </Center>
@@ -129,7 +127,7 @@ const Login = () => {
                   width="full"
                   position="relative"
                   loadingText="Entrando..."
-                  isLoading={authState.isSigningIn}
+                  isLoading={isBusy}
                   colorScheme={colorScheme}
                   transition="background-color 0.5s"
                   onMouseEnter={() => {

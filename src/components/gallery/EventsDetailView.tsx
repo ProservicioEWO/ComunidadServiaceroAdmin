@@ -1,35 +1,34 @@
 import CustomFileInput from '../CustomFileInput';
+import GalleryGrid from './GalleryGrid';
+import ImageThumbnail from './ImageThumbnail';
 import useAppContext from '../../hooks/useAppContext';
 import useCustomToast from '../../hooks/useCustomToast';
+import useS3 from '../../hooks/useS3';
 import { AddIcon } from '@chakra-ui/icons';
-import { BASE_URL_IMG } from '../../shared/cs-constants';
 import {
-  Text,
+  Box,
   Card,
   CardBody,
   Divider,
   FormControl,
-  SimpleGrid,
-  VStack,
-  Box,
-  Fade,
-  Spinner
+  Spinner,
+  Text,
+  VStack
 } from '@chakra-ui/react';
-import { useEffect } from 'react';
+import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers';
+import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import ImageThumbnail from './ImageThumbnail';
-import useS3 from '../../hooks/useS3';
-import GalleryGrid from './GalleryGrid';
+import useAuthContext from '../../hooks/useAuthContext';
 
 export interface EventParams extends Record<string, string> {
   eventId: string
 }
 
 const EventsDetailView = () => {
+  const { authSessionData: { idToken } } = useAuthContext()
   const { events } = useAppContext()
   const { errorToast, successToast } = useCustomToast()
   const { eventId } = useParams<EventParams>()
-
   const {
     imageListState,
     uploadImageState,
@@ -39,29 +38,34 @@ const EventsDetailView = () => {
     fetchImages
   } = useS3({
     region: 'us-east-1',
-    credentials: {
-      accessKeyId: 'keyid',
-      secretAccessKey: 'secretkey'
-    },
-    forcePathStyle: true,
-    endpoint: 'http://localhost:4566'
-  }, 'cs-resources', `events/${eventId}`)
+    credentials: fromCognitoIdentityPool({
+      identityPoolId: 'us-east-1:12c9962b-8973-4f7d-b1ce-b667f563ffac',
+      clientConfig: {
+        region: 'us-east-1'
+      },
+      logins: {
+        'cognito-idp.us-east-1.amazonaws.com/us-east-1_oud83NQk8': idToken!
+      }
+    }),
+    forcePathStyle: true
+  }, 'cs-static-res', `images/gallery/${eventId}`)
 
   const handleFileChange = async (files: FileList) => {
     const ok = await uploadImages(files)
     if (ok) {
       await fetchImages()
-      successToast(`Las imágenes se cargaron con éxito.`)
     } else {
       errorToast("Se produjó un error al momento de subir las imágenes.")
     }
   }
 
-  const handleDelete = async (imageKey: string) => {
-    const ok = await deleteImage(imageKey)
-    if (ok) {
-      await fetchImages()
-      successToast("Se eliminó la imagen con éxito.")
+  const handleDelete = async (imageKey?: string) => {
+    if (imageKey) {
+      const ok = await deleteImage(imageKey)
+      if (ok) {
+        await fetchImages()
+        successToast("Se eliminó la imagen con éxito.")
+      }
     }
   }
 
@@ -72,17 +76,17 @@ const EventsDetailView = () => {
   }, [imageListState.error])
 
   useEffect(() => {
-    if (uploadImageState.failedImages.length) {
+    if (uploadImageState.failedImages.length > 0) {
       const errorList = uploadImageState.failedImages.map(({ filename }) => filename)
       errorToast(`Las siguientes imagenes no se subieron correctamente.\n${errorList.join()}`)
     }
-  }, [uploadImageState.failedImages])
+  }, [uploadImageState.failedImages.length])
 
   useEffect(() => {
-    if (uploadImageState.error) {
+    if (deleteImageState.error) {
       errorToast(`Hubó un error al momento de eliminar la imagen. ${uploadImageState.error}`)
     }
-  }, [uploadImageState.error])
+  }, [deleteImageState.error])
 
   return (
     <Card w="full">
@@ -116,18 +120,18 @@ const EventsDetailView = () => {
                 <Text>Subiendo imágenes</Text>
               </VStack>
             </Box>
-            <GalleryGrid<string>
+            <GalleryGrid<{ key?: string, url: string }>
               isLoading={imageListState.loading}
               list={imageListState.data}
               emptyMessage="Agrega imágenes al evento."
-              mapName={key => key.split("/").pop() ?? ""}
+              mapName={({ key }) => key?.split("/").pop() ?? ""}
             >
               {
-                (key, name, index) => (
+                ({ key, url }, name, index) => (
                   <ImageThumbnail
                     key={index}
                     description={name ?? ""}
-                    src={`${BASE_URL_IMG}/${key}`}
+                    src={url}
                     onDelete={async () => {
                       await handleDelete(key)
                     }} />

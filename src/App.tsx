@@ -1,42 +1,48 @@
-import { useEffect } from 'react';
-import { Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
-import { CourseDetailView, CourseSectionDetailView } from './components/courses';
+import Authorize from './guards/Authorize';
+import Calendar from './pages/Calendar';
+import Courses from './pages/Courses';
+import Dashboard from './pages/Dashboard';
 import EventsDetailView from './components/gallery/EventsDetailView';
-import { LocationDetailView } from './components/locations';
+import Gallery from './pages/Gallery';
+import Locations from './pages/Locations';
+import Login from './pages/Login';
+import NotFound from './pages/NotFound';
+import Redirect from './guards/Redirect';
 import SectionIndex from './components/SectionIndex';
 import StatisticsUserDetail from './components/statitistics/StatisticsUserDetail';
-import StatitisticsDetails, { StatsParams } from './components/statitistics/StatitisticsDetails';
-import UserDetailView from './components/users/UserDetailView';
-import Authorize from './guards/Authorize';
-import Redirect from './guards/Redirect';
+import Statitistics from './pages/Statitistics';
+import StatitisticsDetails from './components/statitistics/StatitisticsDetails';
 import useAppHeaderContext from './hooks/useAppHeaderContext';
+import UserDetailView from './components/users/UserDetailView';
+import Users from './pages/Users';
+import { CourseDetailView, CourseSectionDetailView } from './components/courses';
 import {
   CSBuilding,
   CSCalendar,
   CSChart,
   CSGallery,
+  CSHome,
   CSTeacher,
   CSUsers
 } from './icons/CSIcons';
-import Calendar from './pages/Calendar';
-import Courses from './pages/Courses';
-import Dashboard from './pages/Dashboard';
-import Gallery from './pages/Gallery';
-import Locations from './pages/Locations';
-import Login from './pages/Login';
-import NotFound from './pages/NotFound';
-import Statitistics from './pages/Statitistics';
-import Test from './pages/Test';
-import Users from './pages/Users';
-
+import { LocationDetailView } from './components/locations';
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation
+} from 'react-router-dom';
+import { useEffect } from 'react';
+import Landing from './pages/Landing';
 
 const App = () => {
-  const { userId } = useParams<StatsParams>()
   const { pathname } = useLocation()
   const { icon, title } = useAppHeaderContext()
-  const page = pathname.match(/^\/admin\/(?<section>\w+)/)?.groups?.section ?? ""
+
+  const page = pathname.match(/^\/(?<section>\w+)/)?.groups?.section ?? ""
   const pageInfo = {
     admin: { title: "Inicio" },
+    landing: { title: "Cónocenos", icon: CSHome },
     users: { title: "Usuarios", icon: CSUsers },
     locations: { title: "Instalaciones", icon: CSBuilding },
     courses: { title: "Programas", icon: CSTeacher },
@@ -52,12 +58,13 @@ const App = () => {
 
   return (
     <Routes>
-      <Route path="admin" element={
+      <Route path="/" element={
         <Authorize>
           <Dashboard />
         </Authorize>
       }>
-        <Route index element={<Navigate to='users' />} />
+        <Route index element={<Navigate to='landing' />} />
+        <Route path="landing" element={<Landing />} />
         <Route path="users" element={<Users />}>
           <Route index path=':userId' element={<UserDetailView />} />
         </Route>
@@ -83,15 +90,16 @@ const App = () => {
             <Route index path=':userId' element={<StatisticsUserDetail />} />
           </Route>
         </Route>
-        <Route path='test' element={<Test />} />
         <Route path='*' element={<NotFound />} />
       </Route>
       <Route
         path='login'
-        element={<Redirect>
-          <Login />
-        </Redirect>
+        element={
+          <Redirect>
+            <Login />
+          </Redirect>
         } />
+      <Route path='/error' element={<NotFound />} />
       <Route path='*' element={<NotFound />} />
     </Routes>
   )

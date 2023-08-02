@@ -4,5 +4,4 @@ export interface City {
   id: UUID
   alias: string
   name: string
-  count: number
 }

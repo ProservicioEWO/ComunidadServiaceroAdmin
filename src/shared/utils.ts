@@ -29,3 +29,18 @@ export function formatDateString(date: string) {
 export function formatDate(date: Date) {
   return date.toISOString().slice(0, 10)
 }
+
+export async function getBase64(file: File) {
+  new Promise<string | ArrayBuffer>((resolve, reject) => {
+    var reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = function () {
+      if (reader.result) {
+        resolve(reader.result)
+      }
+    }
+    reader.onerror = function (error) {
+      reject(error)
+    }
+  })
+}

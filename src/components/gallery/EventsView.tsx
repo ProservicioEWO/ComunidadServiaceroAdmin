@@ -10,9 +10,11 @@ import { EventParams } from './EventsDetailView';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { useEffect } from 'react';
 import { VStack } from '@chakra-ui/react';
+import useAuthContext from '../../hooks/useAuthContext';
 
 const EventsView = () => {
   const navigate = useNavigate()
+  const { authSessionData: { accessToken } } = useAuthContext()
   const { newId, events } = useAppContext()
   const { eventId } = useParams<EventParams>()
   const { errorToast, successToast } = useCustomToast()
@@ -20,20 +22,24 @@ const EventsView = () => {
   const { insertData, loading: inserting, error: insertError } = useInsertData<Event>()
 
   const handleDelete = async (id: string | number) => {
-    const ok = await deleteData("/events", id)
+    const ok = await deleteData("/events", id, {
+      jwt: accessToken!
+    })
     if (ok) {
       successToast("Se el evento con éxito")
       const newDatalist = events.get?.filter(e => e.id !== id)
       events.set(newDatalist ?? [])
       if (eventId && String(id) === eventId) {
-        navigate(`/admin/gallery`)
+        navigate(`/gallery`)
       }
     }
   }
 
   const handleAdd = async ({ name }: NewEventValue) => {
     const newEvent = { id: newId, name }
-    const ok = await insertData("/events", newEvent)
+    const ok = await insertData("/events", newEvent, {
+      jwt: accessToken!
+    })
     if (ok) {
       successToast("Se creó el evento con éxito")
       events.set([...events.get ?? [], newEvent])

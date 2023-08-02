@@ -4,11 +4,17 @@ import { BASE_URL_API } from '../shared/cs-constants'
 export type Param = Record<string, string | undefined> | null
 export type Query = Record<string, string | string[]> | null
 
+export interface FetchOptions {
+  param?: Param
+  query?: Query
+  jwt: string
+}
+
 export interface ApiResponse<T> {
   data: T | null,
   loading: boolean,
   error: string | null,
-  fetchData: (e: string, jwt: string, p?: Param, q?: Query) => Promise<void>
+  fetchData: (e: string, fetchOptions: FetchOptions) => Promise<void>
 }
 
 const queryConverter = (record: Query) => (
@@ -24,29 +30,27 @@ const queryConverter = (record: Query) => (
   )
 )
 
-
 const useFetch = <T>(): ApiResponse<T> => {
   const [data, setData] = useState<T | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchData = async (endpoint: string, jwt: string, param?: Param, query?: Query) => {
+  const fetchData = async (endpoint: string, { jwt, param, query }: FetchOptions) => {
     try {
-      //setLoading(true)
+      setLoading(true)
       setError(null)
+
       const queryString = query &&
-      Object.entries(query).length ? `?${new URLSearchParams(queryConverter(query)).toString()}` : ''
+        Object.entries(query).length ? `?${new URLSearchParams(queryConverter(query)).toString()}` : ''
       const newEndpoint = param ? endpoint.replace(/:([a-zA-Z]+)/g, (match, key) => param[key] || match) : endpoint
       const url = `${BASE_URL_API}${newEndpoint}${queryString}`
-      // console.log(url)
-      const init = jwt ? {
+      const init = {
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${jwt}`
         }
-      } as RequestInit : undefined
-      
-      console.log({url, jwt})
+      } as RequestInit
+
       const res = await fetch(url, init)
 
       if (!res.ok) {

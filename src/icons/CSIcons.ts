@@ -5,6 +5,7 @@ import {
     checkIcon,
     deleteUserIcon,
     galleryIcon,
+    homeIcon,
     leftArrowIcon,
     nextIcon,
     previousIcon,
@@ -15,6 +16,12 @@ import {
     usersIcon
 } from './icon-src';
 import { createIcon } from '@chakra-ui/react';
+
+export const CSHome = createIcon({
+    displayName: "CSHome",
+    viewBox: "0 0 35 35",
+    path: homeIcon
+})
 
 export const CSUsers = createIcon({
     displayName: "CSUsers",

@@ -1,5 +1,6 @@
 import useAppContext from '../hooks/useAppContext';
 import useAuthContext from '../hooks/useAuthContext';
+import useCustomToast from '../hooks/useCustomToast';
 import {
   Avatar,
   Box,
@@ -14,59 +15,22 @@ import {
   Text,
   VStack
 } from '@chakra-ui/react';
-import { CognitoUser } from 'amazon-cognito-identity-js';
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import useCustomToast from '../hooks/useCustomToast';
+import { useCallback, useEffect } from 'react';
 
 const SignupUser = () => {
-  const navigate = useNavigate()
-  const { closeAll } = useCustomToast()
-  const { current, signOut } = useAuthContext()
+  const { authSessionData, signOut } = useAuthContext()
   const { userInfo } = useAppContext()
+  const { closeAll } = useCustomToast()
 
-  const [currentUser, setCurrentUser] = useState<CognitoUser | null>(null)
-  // const [userInfo, setUserInfo] = useState<User | null>(null)
-  // const [loading, setLoading] = useState(false)
-
-  const handleSignOut = useCallback(async () => {
-    await signOut()
+  const handleSignOut = useCallback(() => {
+    signOut()
     closeAll()
-    navigate("/login")
-  }, [])
+  }, [closeAll, signOut])
 
-  useEffect(() => {
-
-    if (current.userLoading === true || current.userLoading === null) {
-      return
-    }
-
-    if (current.cognitoUser) {
-      current.cognitoUser.getUserAttributes((err, attr) => {
-        if (err) {
-          console.log(err)
-        }
-
-        const sub = attr?.find(e => e.Name === 'sub')?.Value
-        if (sub) {
-          userInfo.fetch(sub)
-        }
-      })
-    }
-  }, [current.userLoading])
-
-  useEffect(() => {
-    if (userInfo.state.error) {
-      console.log(userInfo.state.error)
-    }
-
-    if (current.userError) {
-      console.log(current.userError)
-    }
-  }, [userInfo.state.error, current.userError])
-
-  if (userInfo.state.loading || current.userLoading) {
-    return <Spinner />
+  if (userInfo.state.loading) {
+    return (
+      <Spinner />
+    )
   }
 
   return (

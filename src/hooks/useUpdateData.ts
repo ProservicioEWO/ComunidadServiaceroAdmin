@@ -1,17 +1,23 @@
 import { useState } from "react"
 import { BASE_URL_API } from "../shared/cs-constants"
 
+export interface UpdateOptions {
+  jwt: string
+}
+
 const useUpdateData = <T>() => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const updateData = async (endpoint: string, param: Record<string, string | undefined> | null = null, data: T) => {
+  const updateData = async (endpoint: string, param: Record<string, string | undefined> | null = null, data: T, { jwt }: UpdateOptions) => {
     setLoading(true)
+    setError(null)
     try {
       const newEndpoint = param ? endpoint.replace(/:([a-zA-Z]+)/g, (match, key) => param[key] || match) : endpoint
       const response = await fetch(`${BASE_URL_API}${newEndpoint}`, {
         method: 'PATCH',
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${jwt}`
         },
         body: JSON.stringify(data)
       })

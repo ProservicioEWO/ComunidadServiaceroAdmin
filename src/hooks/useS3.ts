@@ -1,17 +1,21 @@
 import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
+  GetObjectCommand,
   ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
   S3ClientConfig
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { useEffect, useState } from 'react';
 
 export interface UseS3Type {
+  imageState: ImageState
   imageListState: ImageListState
   uploadImageState: UploadImageState
   deleteImageState: DeleteFileState
+  fetchImage: (filename: string) => Promise<void>
   fetchImages: () => Promise<void>
   deleteImage: (filename: string) => Promise<boolean>
   uploadImages: (files: FileList) => Promise<boolean>
@@ -22,9 +26,15 @@ export interface UploadImageError {
   error: Error
 }
 
+export interface ImageState {
+  loading: boolean
+  url: string | null
+  error?: Error
+}
+
 export interface ImageListState {
   loading: boolean
-  data: string[] | null
+  data: { key?: string, url: string }[] | null
   error?: Error
 }
 
@@ -42,6 +52,13 @@ export interface DeleteFileState {
 
 const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Type => {
   const s3Client = new S3Client(config)
+  const [
+    imageState,
+    setImageState
+  ] = useState<ImageState>({
+    url: null,
+    loading: false
+  })
   const [
     imageListState,
     setImageListState
@@ -64,18 +81,50 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
     loading: false
   })
 
+  const fetchImage = async (filename: string) => {
+    setImageListState({ loading: true, data: null })
+    try {
+      const response = await getSignedUrl(s3Client, new GetObjectCommand({
+        Bucket: bucket,
+        Key: `${prefix}/${filename}`
+      }), { expiresIn: 3000 })
+
+      setImageState({
+        loading: false,
+        url: response
+      })
+    } catch (error) {
+      if (error instanceof Error) {
+        setImageState({
+          loading: false,
+          url: null,
+          error
+        })
+      }
+    }
+  }
+
   const fetchImages = async () => {
     setImageListState({ loading: true, data: null })
     try {
-      const command = new ListObjectsV2Command({
+      const response = await s3Client.send(new ListObjectsV2Command({
         Bucket: bucket,
         Prefix: prefix,
-      });
+      }))
 
-      const response = await s3Client.send(command);
+      const imageList = await Promise.all(
+        response.Contents?.filter(({ Size }) => !!Size).map(async ({ Key }) => ({
+          key: Key,
+          url: await getSignedUrl(s3Client, new GetObjectCommand({
+            Bucket: bucket,
+            Key
+          }), { expiresIn: 3000 })
+        })) ?? []
+      )
+
       setImageListState({
         loading: false,
-        data: response.Contents?.map(objeto => objeto.Key ?? "") ?? null
+        data: imageList
       })
     } catch (error) {
       if (error instanceof Error) {
@@ -99,14 +148,13 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
     try {
       for (const file of files) {
         try {
-          const command = new PutObjectCommand({
+          await s3Client.send(new PutObjectCommand({
             Bucket: bucket,
             Key: prefix ? `${prefix}/${file.name}` : file.name,
             Body: file,
             ACL: 'public-read'
-          })
+          }))
 
-          await s3Client.send(command)
           uploadedImages.push(file.name)
         } catch (error) {
           if (error instanceof Error) {
@@ -138,12 +186,10 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
 
   const deleteImage = async (key: string) => {
     try {
-      const command = new DeleteObjectCommand({
+      await s3Client.send(new DeleteObjectCommand({
         Bucket: bucket,
         Key: key
-      })
-
-      await s3Client.send(command)
+      }))
     } catch (error) {
       if (error instanceof Error) {
         return false
@@ -157,13 +203,12 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
 
   const deleteAllImages = async () => {
     try {
-      const command = new DeleteObjectsCommand({
+      const { Deleted } = await s3Client.send(new DeleteObjectsCommand({
         Bucket: bucket,
         Delete: {
           Objects: []
         }
-      })
-      const { Deleted } = await s3Client.send(command)
+      }))
     } catch (error) {
 
     }
@@ -174,9 +219,11 @@ const useS3 = (config: S3ClientConfig, bucket: string, prefix?: string): UseS3Ty
   }, [bucket, prefix])
 
   return {
+    imageState,
     imageListState,
     uploadImageState,
     deleteImageState,
+    fetchImage,
     fetchImages,
     deleteImage,
     uploadImages

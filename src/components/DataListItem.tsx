@@ -38,7 +38,11 @@ const DataListItem = (({ children, loading, options, onDelete, ...props }: DataL
   const { isOpen, onOpen, onClose } = useDisclosure()
 
   return (
-    <HStack w="full" p="4" align='stretch'
+    <HStack
+      w="full"
+      p="4"
+      align='stretch'
+      alignItems='center'
       _hover={hover} {...props}
       onMouseEnter={setShowButton.on}
       onMouseLeave={setShowButton.off}>
@@ -73,7 +77,7 @@ const DataListItem = (({ children, loading, options, onDelete, ...props }: DataL
                   isLoading={loading}
                   loadingText="Borrando"
                   ml={3}
-                  onClick={async ()=>{
+                  onClick={async () => {
                     await onDelete()
                     onClose()
                   }}>

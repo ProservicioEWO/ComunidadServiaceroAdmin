@@ -1,17 +1,22 @@
-import { useState } from "react"
-import { BASE_URL_API } from "../shared/cs-constants"
+import { BASE_URL_API } from '../shared/cs-constants';
+import { useState } from 'react';
+
+export interface DeleteOptions {
+  jwt: string
+}
 
 const useDeleteData = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const deleteData = async (endpoint: string, id: string | number) => {
+  const deleteData = async (endpoint: string, id: string | number, { jwt }: DeleteOptions) => {
     setLoading(true)
     try {
       const response = await fetch(`${BASE_URL_API}${endpoint}/${id}`, {
         method: 'DELETE',
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${jwt}`
         }
       })
       if (!response.ok) {

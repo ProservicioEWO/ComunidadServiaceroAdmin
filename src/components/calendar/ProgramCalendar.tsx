@@ -1,6 +1,8 @@
-import FullCalendar from "@fullcalendar/react"
 import dayGridPlugin from '@fullcalendar/daygrid';
-import { Card, CardBody, Spinner, Text } from "@chakra-ui/react";
+import FullCalendar from '@fullcalendar/react';
+import { Spinner, Text } from '@chakra-ui/react';
+
+import 'primeicons/primeicons.css';
 
 export interface ProgramEvent {
   title: string
@@ -47,6 +49,7 @@ const ProgramCalendar = ({ programList, isLoading }: ProgramCalendarProps) => {
       </div>
       <FullCalendar
         locale="es-MX"
+        buttonIcons={{}}
         buttonText={{
           today: 'Hoy',
         }}

@@ -19,11 +19,13 @@ import {
 } from '@chakra-ui/react';
 import { Controller, useForm } from 'react-hook-form';
 import { MdInsertLink } from 'react-icons/md';
-import { RefObject, useEffect } from 'react';
+import { RefObject, useEffect, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface ExternalFormValues {
   simpleId: string
   name: string
+  shortName: string
   description: string
   auto: boolean
   institution: string
@@ -45,10 +47,15 @@ export interface ExternalFormProps {
 }
 
 const ExternalForm = ({ formRef, onSubmit, onError }: ExternalFormProps) => {
+  const [idValue, setIdValue] = useState("")
   const { control, formState: { errors }, register, handleSubmit } = useForm<ExternalFormValues>()
 
   useEffect(() => {
-
+    const currentDate = new Date()
+    const time = String(currentDate.getTime())
+    const numeric = time.slice(time.length - 5, time.length - 1)
+    const unique = uuidv4().slice(0, 4)
+    setIdValue('PE-' + numeric + unique)
   }, [])
 
 
@@ -60,29 +67,10 @@ const ExternalForm = ({ formRef, onSubmit, onError }: ExternalFormProps) => {
             <Box>
               <InputGroup>
                 <InputLeftElement children='Id:' />
-                <Input variant='filled' value='PI1039' readOnly {...register("simpleId")} />
+                <Input readOnly variant='filled' value={idValue} {...register("simpleId")} />
               </InputGroup>
             </Box>
-            <Box>
-              <Controller
-                name='color'
-                control={control}
-                render={({ field: { onChange } }) => (
-                  <ColorInput
-                    value={randomColor()}
-                    onColorChange={onChange} />
-                )} />
-            </Box>
           </HStack>
-          <Spacer />
-          <Box>
-            <FormControl display='flex' alignItems='center'>
-              <FormLabel mb={0} htmlFor="is-auto">
-                Ocultar automáticamente
-              </FormLabel>
-              <Switch {...register("auto")} id='is-auto' />
-            </FormControl>
-          </Box>
         </HStack>
         <HStack>
           <FormControl variant='floating' isInvalid={!!errors.name}>
@@ -93,15 +81,23 @@ const ExternalForm = ({ formRef, onSubmit, onError }: ExternalFormProps) => {
             <FormLabel>Nombre</FormLabel>
             <FormErrorMessage>Escribe un nombre para el programa</FormErrorMessage>
           </FormControl>
-          <FormControl variant='floating' isInvalid={!!errors.description}>
+          <FormControl variant='floating' isInvalid={!!errors.shortName}>
             <Input
               size='lg'
               placeholder=' '
-              {...register('description', { required: true })} />
-            <FormLabel>Descripción</FormLabel>
-            <FormErrorMessage>Escribe una descripción para el programa</FormErrorMessage>
+              {...register('shortName', { required: true })} />
+            <FormLabel>Nombre corto</FormLabel>
+            <FormErrorMessage>Escribe un nombre corto para el programa</FormErrorMessage>
           </FormControl>
         </HStack>
+        <FormControl variant='floating' isInvalid={!!errors.description}>
+          <Input
+            size='lg'
+            placeholder=' '
+            {...register('description', { required: true })} />
+          <FormLabel>Descripción</FormLabel>
+          <FormErrorMessage>Escribe una descripción para el programa</FormErrorMessage>
+        </FormControl>
         <HStack align='start'>
           <FormControl variant='floating' isInvalid={!!errors.institution}>
             <Input
@@ -116,7 +112,7 @@ const ExternalForm = ({ formRef, onSubmit, onError }: ExternalFormProps) => {
               <InputLeftElement pointerEvents='none'>
                 <Icon color='gray.400' as={MdInsertLink} />
               </InputLeftElement>
-              <Input placeholder=' ' {...register("rulesLink", { required: true })} />
+              <Input placeholder=' ' {...register("websiteLink", { required: true })} />
             </InputGroup>
             <FormLabel>Página web</FormLabel>
             <FormErrorMessage>Introduce el link al sitio de la intitución</FormErrorMessage>

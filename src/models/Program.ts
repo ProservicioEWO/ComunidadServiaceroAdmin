@@ -9,14 +9,13 @@ export interface Program {
   id: UUID
   simpleId: string
   name: string
+  shortName: string
   description: string
-  auto: boolean
   cost: string
   cityId: string
   rulesLink: string
   mainLink: string
   advantage: string
   type: ProgramType
-  color: string
   section: number
 }

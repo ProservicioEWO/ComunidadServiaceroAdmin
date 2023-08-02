@@ -22,7 +22,9 @@ import { Log } from '../models/Log';
 import { Module } from '../models/Module';
 import { NIL as NIL_UUID, v4 as uuidv4 } from 'uuid';
 import { User } from '../models/User';
-import { AccessTokenState } from './AuthContextProvider';
+import { AuthSessionData } from './AuthContextProvider';
+import { News } from '../models/News';
+import { Testimonial } from '../models/Testimonial';
 
 export interface ContextLogFilters {
   dateStart: string
@@ -31,18 +33,19 @@ export interface ContextLogFilters {
 }
 
 export interface AppContextProps {
+  sessionData: AuthSessionData
   children: ReactNode
-  accessToken: AccessTokenState
 }
 
 export interface AppContextValue {
   readonly newId: UUID
   readonly starting: boolean
-  readonly _accessToken: AccessTokenState
+
   users: {
     state: ContextState
     get: User[] | null,
     set: ContextSetter<User[]>
+    fetch: () => Promise<void>
   }
   password: {
     state: ContextState,
@@ -89,54 +92,51 @@ export interface AppContextValue {
   userInfo: {
     state: ContextState,
     data: User | null
-    fetch: (userId: string) => Promise<void>
+  }
+  news: {
+    list: News[] | null
+    state: ContextState
   }
 }
 
 export const AppContext = createContext<AppContextValue>({
   get newId() { return NIL_UUID },
   get starting() { return false },
-  get _accessToken() {
-    return {
-      token: null,
-      tokenLoading: true,
-      tokenError: null
-    }
-  },
   users: {
-    state: { loading: false, error: null },
+    state: { loading: true, error: null },
     get: null,
     set: () => { },
+    fetch: async () => { }
   },
   password: {
     value: '',
     fetch: async (id?: string) => { },
-    state: { loading: false, error: null },
+    state: { loading: true, error: null },
   },
   locations: {
     fetch: async (cityId?: string) => { },
     list: null,
-    state: { loading: false, error: null }
+    state: { loading: true, error: null }
   },
   cities: {
-    state: { loading: false, error: null },
+    state: { loading: true, error: null },
     get: null,
     set: () => { }
   },
   events: {
-    state: { loading: false, error: null },
+    state: { loading: true, error: null },
     get: null,
     set: () => { }
   },
   programs: {
     fetch: async (cityId?: string, sectionId?: string) => { },
     list: null,
-    state: { loading: false, error: null },
+    state: { loading: true, error: null },
     set: () => { }
   },
   logs: {
     fetch: async (moduleId?: string) => { },
-    state: { loading: false, error: null },
+    state: { loading: true, error: null },
     list: null,
     set: () => { },
     filters: {
@@ -147,17 +147,30 @@ export const AppContext = createContext<AppContextValue>({
   modules: {
     get: null,
     filtered: [],
-    state: { loading: false, error: null },
+    state: { loading: true, error: null },
     applyFilter: () => { }
   },
   userInfo: {
     data: null,
-    state: { loading: true, error: null },
-    fetch: async () => { }
+    state: { loading: true, error: null }
+  },
+  news: {
+    list: null,
+    state: { loading: true, error: null }
   }
 })
 
-const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
+const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
+  // const {
+  //   authSessionData: {
+  //     accessToken,
+  //     isAuthenticated,
+  //     userId
+  //   }
+  // } = useAuthContext()
+
+  const { accessToken, userId } = sessionData
+
   const {
     fetchData: fetchPassword,
     data: userPassword,
@@ -212,6 +225,18 @@ const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
     error: userInfoError,
     fetchData: fetchUserInfo
   } = useFetch<User>()
+  const {
+    data: newsData,
+    loading: newsLoading,
+    error: newsError,
+    fetchData: fetchNews
+  } = useFetch<News[]>()
+  const {
+    data: testimonialsData,
+    loading: testimonialsLoading,
+    error: testimonialsError,
+    fetchData: fetchTestionials
+  } = useFetch<Testimonial[]>()
 
   const [users, setUsers] = useState<User[]>([])
   const [cities, setCities] = useState<City[]>([])
@@ -221,6 +246,8 @@ const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
   const [logs, setLogs] = useState<Log[]>([])
   const [modules, setModules] = useState<Module[]>([])
   const [userInfo, setUserInfo] = useState<User | null>(null)
+  const [news, setNews] = useState<News[] | null>(null)
+  const [testimonials, setTestimonials] = useState<Testimonial[] | null>(null)
   const [filteredModules, setFilteredModules] = useState<Module[]>([])
   const [password, setPassword] = useState("")
   const [logsFilters, setLogsFilters] = useState<ContextLogFilters>({
@@ -233,36 +260,40 @@ const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
       return citiesLoading ||
         usersLoading ||
         eventsLoading ||
-        modulesLoading
+        modulesLoading ||
+        userInfoLoading ||
+        newsLoading
     },
     get newId() {
-      //const nid = this.get?.map(e => e.id)[Math.floor(Math.random() * (100))] ?? NIL_UUID
       return uuidv4()
     },
-    get _accessToken() { return accessToken },
     users: {
       state: { loading: usersLoading, error: usersError },
       get: users,
-      set: setUsers
+      set: setUsers,
+      fetch: async () => {
+        await fetchUsers("/users", {
+          jwt: accessToken!,
+          query: { _append: "enterprise" }
+        })
+      }
     },
     password: {
       fetch: async (id?: string) => {
-        if (accessToken.token) {
-          await fetchPassword("/users/:id", accessToken.token, { id })
-        }
+        await fetchPassword("/users/:id", {
+          jwt: accessToken!,
+          param: { id }
+        })
       },
       state: { loading: passwordLoading, error: passwordError },
       value: password
     },
     locations: {
       fetch: async (cityId?: string) => {
-        if (accessToken.token) {
-          await fetchLocations(
-            "/cities/:cityId/locations",
-            accessToken.token,
-            { cityId }
-          )
-        }
+        await fetchLocations("/cities/:cityId/locations", {
+          jwt: accessToken!,
+          param: { cityId }
+        })
       },
       state: { loading: locationsLoading, error: locationsError },
       list: locations
@@ -282,18 +313,16 @@ const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
       list: programs,
       set: setPrograms,
       fetch: async (cityId?: string, sectionId?: string) => {
-        if (accessToken.token) {
-          if (!cityId && !sectionId) {
-            await fetchPrograms("/programs", accessToken.token)
-          } else {
-            await fetchPrograms(
-              "/cities/:cityid/programs/",
-              accessToken.token,
-              { cityid: cityId },
-              sectionId ? { section: sectionId } : null
-            )
-          }
-
+        if (!cityId && !sectionId) {
+          await fetchPrograms("/programs", {
+            jwt: accessToken!
+          })
+        } else {
+          await fetchPrograms("/cities/:cityid/programs", {
+            jwt: accessToken!,
+            param: { cityid: cityId },
+            query: sectionId ? { section: sectionId } : null
+          })
         }
       }
     },
@@ -302,18 +331,15 @@ const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
       state: { loading: logsLoading, error: logsError },
       set: setLogs,
       fetch: async (moduleId?: string) => {
-        if (accessToken.token) {
-          if (!moduleId) {
-            await fetchLogs("/logs", accessToken.token)
-          } else {
-            await fetchLogs(
-              "/logs",
-              accessToken.token,
-              undefined,
-              { _append: ["module", "user"], moduleId }
-            )
-          }
-
+        if (!moduleId) {
+          await fetchLogs("/logs", {
+            jwt: accessToken!
+          })
+        } else {
+          await fetchLogs("/logs", {
+            jwt: accessToken!,
+            query: { _append: ["module", "user"], moduleId }
+          })
         }
       },
       filters: {
@@ -340,17 +366,15 @@ const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
     },
     userInfo: {
       data: userInfo,
-      state: { loading: userInfoLoading, error: userInfoError },
-      fetch: async (userId) => {
-        if (accessToken.token) {
-          await fetchUserInfo(
-            "/users/:userId",
-            accessToken.token,
-            { userId },
-            { _append: 'enterprise' }
-          )
-        }
-      }
+      state: { loading: userInfoLoading, error: userInfoError }
+    },
+    news: {
+      list: news,
+      state: { loading: newsLoading, error: newsError }
+    },
+    testimonials: {
+      list: testimonials,
+      state: { loading: testimonialsLoading, error: testimonialsError }
     }
   }),
     [
@@ -383,18 +407,37 @@ const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
       userInfoData,
       userInfoError,
       userInfoLoading,
-      accessToken.token
+      accessToken,
+      news,
+      newsLoading,
+      newsError
     ])
 
   useEffect(() => {
-    console.log(accessToken.token)
-    if (accessToken.token !== null) {
-      fetchUsers("/users", accessToken.token, undefined, { _append: "enterprise" })
-      fetchCities("/cities", accessToken.token)
-      fetchEvents("/events", accessToken.token)
-      fetchModules("/modules", accessToken.token, undefined, { _join: "logs" })
-    }
-  }, [accessToken.token])
+    fetchUsers("/users", {
+      jwt: accessToken!,
+      query: { _append: "enterprise" }
+    })
+    fetchCities("/cities", {
+      jwt: accessToken!
+    })
+    fetchEvents("/events", {
+      jwt: accessToken!
+    })
+    fetchModules("/modules", {
+      jwt: accessToken!,
+      query: { _join: "logs" }
+    })
+    fetchUserInfo("/users/:userId", {
+      jwt: accessToken!,
+      param: { userId: userId! },
+      query: { _append: 'enterprise' }
+    })
+    fetchNews("/news", {
+      jwt: accessToken!
+    })
+
+  }, [accessToken, userId])
 
   useEffect(() => {
     if (usersData) {
@@ -449,6 +492,18 @@ const AppContextProvider = ({ children, accessToken }: AppContextProps) => {
       setUserInfo(userInfoData)
     }
   }, [userInfoData])
+
+  useEffect(() => {
+    if (newsData) {
+      setNews(newsData)
+    }
+  }, [newsData])
+
+  useEffect(() => {
+    if (testimonialsData) {
+      setTestimonials(testimonialsData)
+    }
+  }, [testimonialsData])
 
   return (
     <AppContext.Provider value={value}>

@@ -58,10 +58,10 @@ const UserDetails = ({ data }: UserDetailsProps) => {
           <StatNumber>{type}</StatNumber>
         </Stat>
         <Stat>
-          <StatLabel>Contraseña</StatLabel>
+          {/* <StatLabel>Contraseña</StatLabel>
           <StatNumber>
             <DisplayPassword value={password.value} isLoading={password.state.loading} />
-          </StatNumber>
+          </StatNumber> */}
         </Stat>
       </HStack>
     </VStack>

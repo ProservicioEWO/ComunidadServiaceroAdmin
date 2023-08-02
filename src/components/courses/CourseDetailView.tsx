@@ -6,7 +6,6 @@ import FormModal from './FormModal';
 import InternalForm, { InternalFormValues } from './InternalForm';
 import useAppContext from '../../hooks/useAppContext';
 import useCustomToast from '../../hooks/useCustomToast';
-import useFetch from '../../hooks/useFetch';
 import useInsertData from '../../hooks/useInsertData';
 import { AiFillFire } from 'react-icons/ai';
 import {
@@ -29,7 +28,8 @@ import {
   useState
 } from 'react';
 import { useParams } from 'react-router-dom';
-import randomColor from 'randomcolor';
+import useDeleteData from '../../hooks/useDelete';
+import useAuthContext from '../../hooks/useAuthContext';
 
 export interface CourseParams extends Record<string, string> {
   cityId: string
@@ -62,11 +62,16 @@ const getPrgramInfo = (type: ProgramType) => {
 }
 
 const CourseDetailView = () => {
-  const [searchValue, setSearchValue] = useState("")
+  const { authSessionData: { accessToken } } = useAuthContext()
   const { newId, programs } = useAppContext()
+  const [searchValue, setSearchValue] = useState("")
   const { successToast, errorToast } = useCustomToast()
   const { cityId, sectionId } = useParams<CourseParams>()
-  // const { data, loading, error, fetchData } = useFetch<Program[]>()
+  const {
+    error: deleteError,
+    loading: deleteLoading,
+    deleteData
+  } = useDeleteData()
   const {
     insertData,
     loading: loadingInsert,
@@ -113,7 +118,10 @@ const CourseDetailView = () => {
       type: ProgramType.internal,
       ...values
     }
-    const ok = await insertData("/programs", newProgram)
+    const ok = await insertData("/programs", newProgram, {
+      jwt: accessToken!,
+      method: 'PUT'
+    })
     if (ok) {
       programs.set([...(programs.list ?? []), newProgram])
       successToast("Se creó el programa exitosamente.")
@@ -129,11 +137,26 @@ const CourseDetailView = () => {
       type: ProgramType.external,
       ...values
     }
-    const ok = await insertData("/programs", newProgram)
+    const ok = await insertData("/programs", newProgram, {
+      jwt: accessToken!,
+      method: 'PUT'
+    })
     if (ok) {
       programs.set([...(programs.list ?? []), newProgram])
       successToast("Se creó el programa exitosamente.")
       onCloseE()
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    const ok = await deleteData("/programs", id, {
+      jwt: accessToken!
+    })
+
+    if (ok) {
+      const filtered = programs.list?.filter(e => e.id != id) ?? []
+      programs.set([...filtered])
+      successToast("El programa se elimino con éxito.")
     }
   }
 
@@ -144,10 +167,17 @@ const CourseDetailView = () => {
   }, [sectionId])
 
   useEffect(() => {
+    if (deleteError) {
+      errorToast(deleteError)
+    }
+  }, [deleteError])
+
+  useEffect(() => {
     if (errorInsert) {
       errorToast(errorInsert)
     }
   }, [errorInsert])
+
   return (
     <>
       <FormModal
@@ -192,21 +222,21 @@ const CourseDetailView = () => {
             searchValue={searchValue}
             isLoading={programs.state.loading}>
             {
-              ({ id, name, type, auto }) => (
+              (program) => (
                 <DataListItem
-                  key={id}
-                  loading={programs.state.loading}
-                  onDelete={async () => { }}
+                  key={program.id}
+                  loading={deleteLoading}
+                  onDelete={async () => await handleDelete(program.id)}
                   options={{
                     icon: <DeleteIcon color="red.500" />
                   }}>
                   <HStack>
-                    {auto && <Icon color="tomato" as={AiFillFire} />}
-                    <Text>{name}</Text>
+                    {'auto' in program && Boolean(program.auto) && <Icon color="tomato" as={AiFillFire} />}
+                    <Text>{program.shortName}</Text>
                     <Badge
                       rounded="2xl"
-                      colorScheme={getPrgramInfo(type).colorScheme}>
-                      {getPrgramInfo(type).typename}
+                      colorScheme={getPrgramInfo(program.type).colorScheme}>
+                      {getPrgramInfo(program.type).typename}
                     </Badge>
                   </HStack>
                 </DataListItem>

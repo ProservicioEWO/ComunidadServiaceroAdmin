@@ -44,7 +44,7 @@ const UserDetailView = () => {
   const [currentUser, setCurrentUser] = useState<User | undefined>(undefined)
   const { errorToast, successToast } = useCustomToast()
   const { users, password } = useAppContext()
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState({state: false, text: ""})
   const { userId } = useParams<UserDetailParams>()
   // const {
   //   data,
@@ -55,6 +55,7 @@ const UserDetailView = () => {
   const { isOpen, onOpen, onClose } = useDisclosure()
   const btnRef = useRef<HTMLButtonElement>(null)
   const formRef = useRef<HTMLFormElement>(null)
+  
   const handleClick = () => {
     formRef.current?.dispatchEvent(new Event('submit', {
       cancelable: true,
@@ -157,8 +158,8 @@ const UserDetailView = () => {
               Cancelar
             </Button>
             <Button
-              isLoading={isLoading}
-              loadingText="Guardando"
+              isLoading={isLoading.state}
+              loadingText={isLoading.text}
               colorScheme='purple'
               onClick={handleClick}>
               Guardar

@@ -1,7 +1,6 @@
-import { Box, Heading, Text, Button, Icon, HStack, IconProps } from '@chakra-ui/react'
-import { SVGProps } from 'react'
+import { Box, Button, Heading, HStack, Icon, Text } from '@chakra-ui/react'
 import { useNavigate } from 'react-router-dom'
-import { CSPuzzleIcon, CSLeftArrowIcon } from '../icons/CSIcons'
+import { CSLeftArrowIcon, CSPuzzleIcon } from '../icons/CSIcons'
 
 const NotFound = () => {
   const navigate = useNavigate()

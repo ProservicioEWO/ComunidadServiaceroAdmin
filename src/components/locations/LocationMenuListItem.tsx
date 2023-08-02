@@ -20,16 +20,21 @@ import { useRef, memo } from 'react';
 
 export interface LocationMenuListItemProps {
   text: string
-  counter: number
   isLoading: boolean
   isActive: boolean
   onDelete: () => Promise<void>
 }
 
-const LocationMenuListItem = memo(({ text, counter, isLoading, isActive, onDelete }: LocationMenuListItemProps) => {
+const LocationMenuListItem = memo(({ text, isLoading, isActive, onDelete }: LocationMenuListItemProps) => {
   const [hovered, setHovered] = useBoolean()
   const { isOpen, onOpen, onClose } = useDisclosure()
   const cancelRef = useRef<HTMLButtonElement>(null)
+
+  const handleDelete = async () => {
+    await onDelete()
+    onClose()
+  }
+
   return (
     <>
       <HStack
@@ -49,15 +54,7 @@ const LocationMenuListItem = memo(({ text, counter, isLoading, isActive, onDelet
                 e.preventDefault()
                 onOpen()
               }} /> :
-              <Badge
-                style={{
-                  backgroundColor: isActive ? "white" : "#046F67",
-                  color: isActive ? "#046F67" : "white"
-                }}
-                px="3"
-                borderRadius="full">
-                {counter}
-              </Badge>
+              ''
           }
         </Box>
       </HStack>
@@ -79,7 +76,7 @@ const LocationMenuListItem = memo(({ text, counter, isLoading, isActive, onDelet
                 colorScheme='red'
                 isLoading={isLoading}
                 loadingText="Borrando"
-                onClick={onDelete}
+                onClick={handleDelete}
                 ml={3}>
                 Borrar
               </Button>

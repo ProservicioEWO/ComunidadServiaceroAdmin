@@ -1,207 +1,123 @@
-import { Amplify, Auth } from 'aws-amplify';
-import { CognitoUser, CognitoUserSession } from 'amazon-cognito-identity-js';
 import {
   createContext,
   ReactNode,
-  useEffect,
-  useMemo,
-  useState
+  useCallback, useEffect, useState
 } from 'react';
+import AuthService from '../services/AuthService';
 
-Amplify.configure({
-  Auth: {
-    identityPoolId: import.meta.env.VITE_COGNITO_IG_ID,
-    userPoolId: import.meta.env.VITE_COGNITO_POOL_ID,
-    clientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
-    userPoolWebClientId: import.meta.env.VITE_COGNITO_CLIENT_ID,
-    storage: window.sessionStorage
-  }
-})
-
-export enum AuthStatus {
-  FAIL = 0,
-  OK = 1
-}
-
-export interface AuthResponse {
-  status: AuthStatus
-  error?: string
-}
-
-export interface AuthState {
-  isSigningIn: boolean,
-  isSigningOut: boolean
-}
-
-export interface AuthError {
-  signIn: string | null,
-  signOut: string | null
-}
-
-export interface UserSession {
-  cognitoUser: CognitoUser | null
-  userLoading: boolean
-  userError: string | null
-}
-
-export interface AccessTokenState {
-  tokenLoading: boolean
-  tokenError: string | null
-  token: string | null
+export interface AuthSessionData {
+  isAuthenticated: boolean
+  userId: string | null
+  accessToken: string | null
+  idToken: string | null
 }
 
 export interface AuthContextValue {
-  signIn: (username: string, password: string) => Promise<AuthResponse>
+  authSessionData: AuthSessionData
+  isBusy: boolean
+  hasError: string | null
+  signIn: (username: string, password: string) => Promise<void>
   signOut: () => Promise<void>
-  current: UserSession
-  accessToken: AccessTokenState
-  authState: AuthState,
-  authError: AuthError
 }
 
 export const AuthContext = createContext<AuthContextValue>({
-  signIn: async () => ({ status: AuthStatus.FAIL }),
-  signOut: async () => { },
-  current: {
-    cognitoUser: null,
-    userError: null,
-    userLoading: true
+  authSessionData: {
+    isAuthenticated: false,
+    accessToken: null,
+    idToken: null,
+    userId: null,
   },
-  accessToken: {
-    tokenError: null,
-    tokenLoading: true,
-    token: null
-  },
-  authState: {
-    isSigningIn: false,
-    isSigningOut: false
-  },
-  authError: {
-    signIn: null,
-    signOut: null
-  }
+  hasError: null,
+  isBusy: false,
+  signIn: async () => { },
+  signOut: async () => { }
 })
 
 const AuthContextProvider = ({ children }: { children: ReactNode }) => {
-  const [isSigningOut, setIsSigningOut] = useState(false)
-  const [isSigningIn, setIsSigningIn] = useState(false)
-  const [signInError, setSignInError] = useState<string | null>(null)
-  const [signOutError, setSignOutError] = useState<string | null>(null)
+  const [isBusy, setIsBusy] = useState(true)
+  const [hasError, setHasError] = useState<string | null>(null)
 
-  const [tokenLoading, setTokenLoading] = useState<boolean>(true)
-  const [tokenError, setTokenError] = useState<string | null>(null)
-  const [token, setToken] = useState<string | null>(null)
+  const [userId, setUserId] = useState<string | null>(null)
+  const [accessToken, setAccessToken] = useState<string | null>(null)
+  const [idToken, setIdToken] = useState<string | null>(null)
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false)
 
-  const [cognitoUser, setCognitoUser] = useState<CognitoUser | null>(null)
-  const [userLoading, setUserLoading] = useState<boolean>(true)
-  const [userError, setUserError] = useState<string | null>(null)
+  const signIn = useCallback(async (username: string, password: string) => {
+    try {
+      setIsBusy(true)
+      setHasError(null)
 
-  const value = useMemo<AuthContextValue>(() => ({
-    current: {
-      cognitoUser,
-      userLoading,
-      userError
-    },
-    accessToken: {
-      tokenError,
-      tokenLoading,
-      token
-    },
-    signIn: async (username, password): Promise<AuthResponse> => {
-      let authResponse: AuthResponse = { status: AuthStatus.FAIL }
-      try {
-        setSignInError(null)
-        setIsSigningIn(true)
-        const user = await Auth.signIn(username, password) as CognitoUser
+      const userSession = await AuthService.login(username, password)
 
-        authResponse = {
-          status: AuthStatus.OK
-        }
-      } catch (error) {
-        const _error = error as Error
-        if (_error.message === "Incorrect username or password.") {
-          setSignInError("Usuario o contraseña incorrectos.")
-        } else {
-          setSignInError(`${_error.name} ${_error.message}`)
-        }
+      setIdToken(userSession.getIdToken().getJwtToken())
+      setAccessToken(userSession.getAccessToken().getJwtToken())
+      setIsAuthenticated(userSession.isValid())
 
-        setIsSigningIn(false)
+      const userId = await AuthService.getUserId()
 
-        authResponse = {
-          status: AuthStatus.FAIL,
-          error: (error as Error).message
-        }
-      } finally {
-        setIsSigningIn(false)
-        return authResponse
+      setUserId(userId)
+    } catch (error) {
+      const _error = error as Error
+      if (_error.message === "Incorrect username or password.") {
+        setHasError("Usuario o contraseña incorrectos.")
+      } else {
+        setHasError(`${_error.name} ${_error.message}`)
       }
-    },
-    signOut: async () => {
-      try {
-        setIsSigningOut(true)
-        await Auth.signOut()
-      } catch (error) {
-        setSignOutError((error as Error).message)
-      } finally {
-        setIsSigningOut(false)
-      }
-    },
-    authState: {
-      isSigningOut,
-      isSigningIn
-    },
-    authError: {
-      signIn: signInError,
-      signOut: signOutError
+    } finally {
+      setIsBusy(false)
     }
-  }), [
-    isSigningOut,
-    isSigningIn,
-    signInError,
-    signOutError,
-    token,
-    tokenLoading,
-    tokenError,
-    cognitoUser,
-    userLoading,
-    userError
-  ])
+  }, [])
+
+  const signOut = useCallback(async () => {
+    try {
+      setIsBusy(true)
+      setHasError(null)
+      const res = await AuthService.logout()
+      if (!res) {
+        throw new Error("Ocurrio un error al tratar de cerrar la sesión.")
+      }
+      setIdToken(null)
+      setAccessToken(null)
+      setIsAuthenticated(false)
+    } catch (error) {
+      setHasError((error as Error).message)
+    } finally {
+      setIsBusy(false)
+    }
+  }, [])
 
   useEffect(() => {
-    const getAccessToken = async () => {
-      try {
-        setTokenLoading(true)
-        setTokenError(null)
-        const _session = await Auth.currentSession() as CognitoUserSession
-        console.log(_session)
-        setToken(_session.getAccessToken().getJwtToken())
-      } catch (err) {
-        setTokenError((err as Error).message)
-      } finally {
-        setTokenLoading(false)
-      }
-    }
+    (async () => {
+      setIsBusy(true)
+      setHasError(null)
 
-    const getUser = async () => {
       try {
-        setUserLoading(true)
-        setUserError(null)
-        const _user = await Auth.currentAuthenticatedUser() as CognitoUser
-        console.log(_user)
-        setCognitoUser(_user)
-      } catch (err) {
-        setUserError((err as Error).message)
-      } finally {
-        setUserLoading(false)
-      }
-    }
+        if (await AuthService.isAuthenticated()) {
+          const userId = await AuthService.getUserId()
 
-    getUser()
-    getAccessToken()
+          setIdToken(await AuthService.idToken())
+          setAccessToken(await AuthService.accessToken())
+          setIsAuthenticated(true)
+          setUserId(userId)
+        }
+      } catch (error) {
+        setHasError((error as Error).message)
+      } finally {
+        setIsBusy(false)
+      }
+    })()
   }, [])
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{
+      isBusy,
+      hasError,
+      signIn,
+      signOut,
+      authSessionData: {
+        accessToken, idToken, isAuthenticated, userId
+      }
+    }}>
       {children}
     </AuthContext.Provider>
   )

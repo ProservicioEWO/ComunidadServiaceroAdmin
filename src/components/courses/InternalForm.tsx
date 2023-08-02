@@ -20,24 +20,27 @@ import {
 } from '@chakra-ui/react';
 import { Controller, useForm } from 'react-hook-form';
 import { MdInsertLink } from 'react-icons/md';
-import { RefObject, useEffect } from 'react';
+import { RefObject, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { LocationParams } from '../locations/LocationDetailView';
 import useAppContext from '../../hooks/useAppContext';
 import { ChevronDownIcon } from '@chakra-ui/icons';
 import ColorInput from '../ColorInput';
 import randomColor from 'randomcolor';
+import { v4 as uuidv4 } from 'uuid';
 
 export interface InternalFormValues {
   simpleId: string
   name: string
+  shortName: string
   description: string
   auto: boolean
   cost: string
   advantage: string
-  date: string,
+  date: string
+  end: string
   locationId: string
-  duration: number
+  duration: string
   schedule: string
   mainLink: string
   rulesLink: string
@@ -53,9 +56,18 @@ export interface InternalFormProps {
 }
 
 const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
+  const [idValue, setIdValue] = useState("")
   const { cityId } = useParams<LocationParams>()
   const { locations } = useAppContext()
   const { control, formState: { errors }, register, handleSubmit } = useForm<InternalFormValues>()
+
+  useEffect(() => {
+    const currentDate = new Date()
+    const time = String(currentDate.getTime())
+    const numeric = time.slice(time.length - 5, time.length - 1)
+    const unique = uuidv4().slice(0, 4)
+    setIdValue('PI-' + numeric + unique)
+  }, [])
 
   useEffect(() => {
     locations.fetch(cityId)
@@ -69,7 +81,7 @@ const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
             <Box>
               <InputGroup>
                 <InputLeftElement children='Id:' />
-                <Input variant='filled' value='PI1039' readOnly {...register("simpleId")} />
+                <Input readOnly variant='filled' value={idValue} {...register("simpleId")} />
               </InputGroup>
             </Box>
             <Box>
@@ -104,15 +116,23 @@ const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
             <FormLabel>Nombre</FormLabel>
             <FormErrorMessage>Escribe un nombre para el programa</FormErrorMessage>
           </FormControl>
-          <FormControl variant='floating' isInvalid={!!errors.description}>
+          <FormControl variant='floating' isInvalid={!!errors.shortName}>
             <Input
               size='lg'
               placeholder=' '
-              {...register('description', { required: true })} />
-            <FormLabel>Descripción</FormLabel>
-            <FormErrorMessage>Escribe una descripción para el programa</FormErrorMessage>
+              {...register('shortName', { required: true })} />
+            <FormLabel>Nombre corto</FormLabel>
+            <FormErrorMessage>Escribe un nombre corto para el programa</FormErrorMessage>
           </FormControl>
         </HStack>
+        <FormControl variant='floating' isInvalid={!!errors.description}>
+          <Input
+            size='lg'
+            placeholder=' '
+            {...register('description', { required: true })} />
+          <FormLabel>Descripción</FormLabel>
+          <FormErrorMessage>Escribe una descripción para el programa</FormErrorMessage>
+        </FormControl>
         <Divider />
         <VStack align='stretch'>
           <Heading size="md">Plan curricular</Heading>
@@ -157,8 +177,13 @@ const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
         <HStack align='start'>
           <FormControl variant='floating' isInvalid={!!errors.date}>
             <Input type='date' size='lg' placeholder=' ' {...register("date", { required: true })} />
-            <FormLabel>Periodo</FormLabel>
+            <FormLabel>Inicio</FormLabel>
             <FormErrorMessage>Indica una fecha de inicio</FormErrorMessage>
+          </FormControl>
+          <FormControl variant='floating' isInvalid={!!errors.date}>
+            <Input type='date' size='lg' placeholder=' ' {...register("end", { required: true })} />
+            <FormLabel>Fin</FormLabel>
+            <FormErrorMessage>Indica una fecha de fin</FormErrorMessage>
           </FormControl>
           <FormControl variant='floating' isInvalid={!!errors.locationId}>
             <Select
@@ -176,17 +201,17 @@ const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
             <FormLabel>Ubicación</FormLabel>
             <FormErrorMessage>Selecciona una ubicación</FormErrorMessage>
           </FormControl>
-          <FormControl variant='floating' isInvalid={!!errors.duration}>
-            <Input type='number' size='lg' placeholder=' ' {...register("duration", { required: true, valueAsNumber: true })} />
-            <FormLabel>Duración</FormLabel>
-            <FormErrorMessage>Indica una duración</FormErrorMessage>
-          </FormControl>
           <FormControl variant='floating' isInvalid={!!errors.schedule}>
             <Input type='time' size='lg' placeholder=' ' {...register("schedule", { required: true })} />
             <FormLabel>Horario</FormLabel>
             <FormErrorMessage>Indica un horario</FormErrorMessage>
           </FormControl>
         </HStack>
+        <FormControl variant='floating' isInvalid={!!errors.duration}>
+          <Input size='lg' placeholder=' ' {...register("duration", { required: true })} />
+          <FormLabel>Duración</FormLabel>
+          <FormErrorMessage>Indica una duración</FormErrorMessage>
+        </FormControl>
         <Divider />
         <HStack align='start'>
           <FormControl variant='floating' isInvalid={!!errors.mainLink}>
