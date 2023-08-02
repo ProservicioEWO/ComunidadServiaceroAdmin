@@ -40,6 +40,7 @@ const App = () => {
   const { icon, title } = useAppHeaderContext()
 
   const page = pathname.match(/^\/(?<section>\w+)/)?.groups?.section ?? ""
+  
   const pageInfo = {
     admin: { title: "Inicio" },
     landing: { title: "Cónocenos", icon: CSHome },
