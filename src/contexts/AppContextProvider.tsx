@@ -96,6 +96,10 @@ export interface AppContextValue {
   news: {
     list: News[] | null
     state: ContextState
+  },
+  testimonials: {
+    list: Testimonial[] | null
+    state: ContextState
   }
 }
 
@@ -155,6 +159,10 @@ export const AppContext = createContext<AppContextValue>({
     state: { loading: true, error: null }
   },
   news: {
+    list: null,
+    state: { loading: true, error: null }
+  },
+  testimonials: {
     list: null,
     state: { loading: true, error: null }
   }
@@ -404,13 +412,16 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
       passwordLoading,
       passwordError,
       logsFilters,
-      userInfoData,
+      userInfo,
       userInfoError,
       userInfoLoading,
       accessToken,
       news,
       newsLoading,
-      newsError
+      newsError,
+      testimonials,
+      testimonialsLoading,
+      testimonialsError
     ])
 
   useEffect(() => {
@@ -434,6 +445,9 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
       query: { _append: 'enterprise' }
     })
     fetchNews("/news", {
+      jwt: accessToken!
+    })
+    fetchTestionials("/testimonials", {
       jwt: accessToken!
     })
 
