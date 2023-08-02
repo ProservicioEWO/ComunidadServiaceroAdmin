@@ -31,12 +31,12 @@ export function formatDate(date: Date) {
 }
 
 export async function getBase64(file: File) {
-  new Promise<string | ArrayBuffer>((resolve, reject) => {
+  return new Promise<string>((resolve, reject) => {
     var reader = new FileReader()
     reader.readAsDataURL(file)
-    reader.onload = function () {
-      if (reader.result) {
-        resolve(reader.result)
+    reader.onload = function (e) {
+      if (e.target?.result) {
+        resolve(e.target?.result as string)
       }
     }
     reader.onerror = function (error) {

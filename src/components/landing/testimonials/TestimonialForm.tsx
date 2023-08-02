@@ -17,7 +17,7 @@ export interface TestimonialFormValues {
 }
 
 export interface TestimonialFormProps {
-  data: Testimonial
+  data?: Testimonial
   onSubmit: SubmitHandler<TestimonialFormValues>
 }
 

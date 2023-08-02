@@ -94,11 +94,14 @@ export interface AppContextValue {
     data: User | null
   }
   news: {
-    list: News[] | null
-    state: ContextState
+    list: News[] | null,
+    set: ContextSetter<News[] | null>,
+    state: ContextState,
+    fetch: () => Promise<void>
   },
   testimonials: {
     list: Testimonial[] | null
+    set: ContextSetter<Testimonial[] | null>
     state: ContextState
   }
 }
@@ -160,25 +163,19 @@ export const AppContext = createContext<AppContextValue>({
   },
   news: {
     list: null,
-    state: { loading: true, error: null }
+    set: () => { },
+    state: { loading: true, error: null },
+    fetch: async () => { }
   },
   testimonials: {
     list: null,
+    set: () => { },
     state: { loading: true, error: null }
   }
 })
 
 const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
-  // const {
-  //   authSessionData: {
-  //     accessToken,
-  //     isAuthenticated,
-  //     userId
-  //   }
-  // } = useAuthContext()
-
   const { accessToken, userId } = sessionData
-
   const {
     fetchData: fetchPassword,
     data: userPassword,
@@ -270,7 +267,8 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
         eventsLoading ||
         modulesLoading ||
         userInfoLoading ||
-        newsLoading
+        newsLoading || 
+        testimonialsLoading
     },
     get newId() {
       return uuidv4()
@@ -378,10 +376,17 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
     },
     news: {
       list: news,
-      state: { loading: newsLoading, error: newsError }
+      set: (value) => setNews(value),
+      state: { loading: newsLoading, error: newsError },
+      fetch: async () => {
+        await fetchNews("/", {
+          jwt: accessToken!
+        })
+      }
     },
     testimonials: {
       list: testimonials,
+      set: (newT) => setTestimonials(newT),
       state: { loading: testimonialsLoading, error: testimonialsError }
     }
   }),

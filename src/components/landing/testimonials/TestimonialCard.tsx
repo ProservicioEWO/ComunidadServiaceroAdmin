@@ -1,3 +1,4 @@
+import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import {
   Button,
   Card,
@@ -17,21 +18,29 @@ import {
   useBoolean,
   useDisclosure
 } from '@chakra-ui/react';
-import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
-import { Testimonial } from '../../../models/Testimonial';
-import TestimonialEditForm, { TestimonialFormValues } from './TestimonialForm';
-import { useRef } from 'react';
-import useInsertData from '../../../hooks/useInsertData';
+import { useEffect, useRef } from 'react';
+import useAppContext from '../../../hooks/useAppContext';
 import useAuthContext from '../../../hooks/useAuthContext';
+import useCustomToast from '../../../hooks/useCustomToast';
+import useDeleteData from '../../../hooks/useDelete';
+import useInsertData from '../../../hooks/useInsertData';
+import { Testimonial } from '../../../models/Testimonial';
+import TestimonialForm, { TestimonialFormValues } from './TestimonialForm';
 
 export interface TestimonialCardProps {
   data: Testimonial
 }
 
 const TestimonialCard = ({ data }: TestimonialCardProps) => {
+  const { successToast, errorToast } = useCustomToast()
   const { authSessionData: { accessToken } } = useAuthContext()
-  const [isSubmitting, setIsSubmitting] = useBoolean(false)
+  const { testimonials } = useAppContext()
   const { isOpen, onOpen, onClose } = useDisclosure()
+  const {
+    error: deleteError,
+    loading: deleteLoading,
+    deleteData
+  } = useDeleteData()
   const {
     error: insertError,
     loading: insertLoading,
@@ -48,11 +57,50 @@ const TestimonialCard = ({ data }: TestimonialCardProps) => {
   }
 
   const handleDelete = async () => {
+    try {
+      const ok = await deleteData("/testimonials", data.id, {
+        jwt: accessToken!
+      })
+
+      if (ok) {
+        const newTestimonialsList = testimonials.list?.filter(e => e.id !== data.id)
+        testimonials.set(newTestimonialsList ?? [])
+      }
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   const handleSubmit = async (values: TestimonialFormValues) => {
+    try {
+      const newTestimonial = { id: data.id, ...values }
+      const ok = await insertData("/testimonials", newTestimonial, {
+        jwt: accessToken!,
+        method: 'PUT'
+      })
 
+      if (ok) {
+        testimonials.set([newTestimonial, ...(testimonials.list ?? [])])
+        successToast("Se modificó el testimonio con éxito")
+        onClose()
+      }
+    } catch (error) {
+      const err = error as Error
+      console.log(err.message)
+    }
   }
+
+  useEffect(() => {
+    if (insertError) {
+      errorToast(insertError)
+    }
+  }, [insertError])
+
+  useEffect(() => {
+    if (deleteError) {
+      errorToast(deleteError)
+    }
+  }, [deleteError])
 
   return (
     <>
@@ -76,6 +124,8 @@ const TestimonialCard = ({ data }: TestimonialCardProps) => {
             <Spacer />
             <Button
               onClick={handleDelete}
+              loadingText="Borrando"
+              isLoading={deleteLoading}
               colorScheme="red"
               leftIcon={<DeleteIcon />}>
               Borrar
@@ -97,7 +147,7 @@ const TestimonialCard = ({ data }: TestimonialCardProps) => {
             Editando testimonio
           </DrawerHeader>
           <DrawerBody>
-            <TestimonialEditForm
+            <TestimonialForm
               ref={formRef}
               data={data}
               onSubmit={handleSubmit} />
@@ -110,6 +160,8 @@ const TestimonialCard = ({ data }: TestimonialCardProps) => {
               </Button>
               <Button
                 colorScheme="purple"
+                isLoading={insertLoading}
+                loadingText="Guardando"
                 type="submit"
                 onClick={confirmSubmit}>
                 Guardar

@@ -1,5 +1,5 @@
-import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers';
-import { EditIcon } from '@chakra-ui/icons';
+import NewForm, { ExpandedNewsEditFromValues, NewsEditFormValues } from './NewForm';
+import useCustomToast from '../../../hooks/useCustomToast';
 import {
   Box,
   Button,
@@ -14,33 +14,28 @@ import {
   DrawerFooter,
   DrawerHeader,
   DrawerOverlay,
-  FormControl,
-  FormErrorMessage,
-  FormLabel,
-  HStack,
   Image,
-  Input, Spacer,
+  Spacer,
   Spinner,
   Text,
-  Textarea,
   useDisclosure,
   VStack
 } from '@chakra-ui/react';
-import { useEffect, useRef, useState } from 'react';
-import Dropzone from 'react-dropzone';
-import { Controller, useForm } from 'react-hook-form';
-import useAuthContext from '../../../hooks/useAuthContext';
-import useCustomToast from '../../../hooks/useCustomToast';
-import useS3 from '../../../hooks/useS3';
+import { EditIcon } from '@chakra-ui/icons';
 import { News } from '../../../models/News';
-import { getBase64 } from '../../../shared/utils';
+import { useEffect, useRef, useState } from 'react';
+import useUpdateData from '../../../hooks/useUpdateData';
+import useAuthContext from '../../../hooks/useAuthContext';
+import { fromCognitoIdentityPool } from '@aws-sdk/credential-providers';
+import useS3 from '../../../hooks/useS3';
+import useAppContext from '../../../hooks/useAppContext';
 
-export interface NewsEditFormValues {
+export interface NewsUpdateInfo {
   title: string
   description: string
   link: string
-  image: string
   date: string
+  image: string
 }
 
 export interface NewsCardProps {
@@ -48,25 +43,15 @@ export interface NewsCardProps {
 }
 
 const NewsCard = ({ data }: NewsCardProps) => {
+  const { authSessionData: { accessToken, idToken } } = useAuthContext()
+  const { news } = useAppContext()
+  const { errorToast, successToast, closeAll } = useCustomToast()
   const {
-    formState: { errors, isSubmitting },
-    control,
-    handleSubmit,
-    register
-  } = useForm<NewsEditFormValues>({
-    values: {
-      title: data.title,
-      description: data.description,
-      link: data.link,
-      image: data.image,
-      date: data.date
-    }
-  })
-  const { errorToast, closeAll } = useCustomToast()
-  const { isOpen, onOpen, onClose } = useDisclosure()
-  const [isLoading, setIsLoading] = useState(true)
-  const { authSessionData: { idToken } } = useAuthContext()
-  const { fetchImage, imageState } = useS3({
+    fetchImage,
+    imageState,
+    uploadImages,
+    uploadImageState
+  } = useS3({
     region: 'us-east-1',
     credentials: fromCognitoIdentityPool({
       identityPoolId: 'us-east-1:12c9962b-8973-4f7d-b1ce-b667f563ffac',
@@ -79,14 +64,64 @@ const NewsCard = ({ data }: NewsCardProps) => {
     }),
     forcePathStyle: true
   }, 'cs-static-res', `images/news`)
-  const btnRef = useRef<any>()
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const [isLoading, setIsLoading] = useState(true)
+  const {
+    error: updateError,
+    loading: updateLoading,
+    updateData
+  } = useUpdateData<NewsUpdateInfo>()
+  const formRef = useRef<HTMLFormElement | null>(null)
+  const btnRef = useRef<HTMLButtonElement | null>(null)
 
-  const handleDrop = async (files: File[]) => {
-    const base64 = await getBase64(files[0])
+  const handleUpdate = async (expandedValues: ExpandedNewsEditFromValues) => {
+    const { imageList, values } = expandedValues
+    const newImage = imageList ? imageList[0].name : data.image
+    try {
+      const ok = await updateData("/news/:id", {
+        id: data.id
+      }, {
+        date: values.date,
+        description: values.description,
+        link: values.link,
+        title: values.title,
+        image: newImage,
+      }, {
+        jwt: accessToken!
+      })
+
+      if (ok) {
+        if (imageList) {
+          const filesOK = await uploadImages(imageList)
+          if (filesOK) {
+            await fetchImage(imageList[0].name)
+            successToast("Se actualizó la imagen noticia con éxito")
+          }
+        }
+
+        const nnews = news.list?.filter(e => e.id != data.id) ?? []
+        news.set([{
+          id: data.id,
+          image: newImage,
+          date: values.date,
+          description: values.description,
+          link: values.link,
+          title: values.title
+        }, ...nnews])
+
+        successToast("Se actualizó la noticia con éxito")
+        onClose()
+      }
+    } catch (error) {
+      console.log(error)
+    }
   }
 
-  const onUpdateNews = async () => {
-
+  const confirmUpdate = () => {
+    if (formRef.current) {
+      const submitEvent = new Event('submit', { bubbles: true, cancelable: true })
+      formRef.current.dispatchEvent(submitEvent)
+    }
   }
 
   useEffect(() => {
@@ -94,11 +129,21 @@ const NewsCard = ({ data }: NewsCardProps) => {
   }, [])
 
   useEffect(() => {
-    if (imageState.error) {
-      errorToast(imageState.error.message)
+    if (uploadImageState.error) {
+      errorToast(uploadImageState.error.message)
     }
-  }, [imageState.error])
 
+    if (!!uploadImageState.failedImages.length) {
+      errorToast(`Hubo un error subiendo las imagenes\n: ${uploadImageState.failedImages.join(",")}`)
+    }
+  }, [uploadImageState.error, uploadImageState.failedImages])
+
+
+  useEffect(() => {
+    if (updateError) {
+      errorToast(updateError)
+    }
+  }, [updateError])
 
   return (
     <>
@@ -132,8 +177,11 @@ const NewsCard = ({ data }: NewsCardProps) => {
             </Center>
           </Box>
         }
-        <Image display={isLoading ? "none" : undefined} onLoad={() => setIsLoading(false)}
-          objectFit="cover" src={imageState.url ?? ''} />
+        <Image
+          display={isLoading ? "none" : undefined}
+          onLoad={() => setIsLoading(false)}
+          objectFit="cover"
+          src={imageState.url ?? ''} />
         <CardFooter>
           <Spacer />
           <Button
@@ -147,71 +195,28 @@ const NewsCard = ({ data }: NewsCardProps) => {
           </Button>
         </CardFooter>
       </Card>
-      <Drawer placement="bottom" isOpen={isOpen} onClose={onClose}>
+      <Drawer
+        placement="bottom"
+        isOpen={isOpen}
+        onClose={onClose}>
         <DrawerOverlay />
         <DrawerContent>
           <DrawerHeader
             borderBottomWidth='1px'>
-            {data.title}
+            Editar {data.title}
           </DrawerHeader>
           <DrawerBody>
-            <form onSubmit={handleSubmit(onUpdateNews)}>
-              <HStack align="start" spacing={4} p={4}>
-                <VStack spacing={4} w="full">
-                  <FormControl variant='floating' isInvalid={!!errors.title}>
-                    <Input {...register("title")} />
-                    <FormLabel>Título</FormLabel>
-                    <FormErrorMessage></FormErrorMessage>
-                  </FormControl>
-                  <FormControl variant='floating' isInvalid={!!errors.description}>
-                    <Textarea {...register("description")} />
-                    <FormLabel>Descripcion</FormLabel>
-                  </FormControl>
-                  <HStack width="full">
-                    <FormControl flexBasis="80%" variant='floating' isInvalid={!!errors.link}>
-                      <Input {...register("link")} />
-                      <FormLabel>Link</FormLabel>
-                    </FormControl>
-                    <FormControl flexBasis="20%" variant='floating' isInvalid={!!errors.date}>
-                      <Input {...register("date")} />
-                      <FormLabel>Fecha</FormLabel>
-                    </FormControl>
-                  </HStack>
-                </VStack>
-                <Box
-                  shadow="md"
-                  borderWidth="10px"
-                  borderColor="white">
-                  <Controller
-                    name="image"
-                    control={control}
-                    render={({ field }) => (
-                      <Dropzone
-                        maxFiles={1}
-                        multiple={false}
-                        onDrop={handleDrop}>
-                        {
-                          ({ getRootProps, getInputProps, acceptedFiles }) => (
-                            <div {...getRootProps()}>
-                              <input {...getInputProps()} />
-                              {
-                                !!acceptedFiles.length ?
-                                  <Image maxH="sm" src={"imageBase64"} /> :
-                                  <Image maxH="sm" src={imageState.url ?? ''} />
-                              }
-                            </div>
-                          )
-                        }
-                      </Dropzone>
-                    )} />
-                </Box>
-              </HStack>
-            </form>
+            <NewForm
+              ref={formRef}
+              data={data}
+              imageUrl={imageState.url ?? ''}
+              onUpdate={handleUpdate} />
           </DrawerBody>
           <DrawerFooter>
             <Button
+              onClick={confirmUpdate}
               loadingText='Guardando'
-              isLoading={isSubmitting}
+              isLoading={updateLoading}
               colorScheme="purple">
               Guardar
             </Button>
