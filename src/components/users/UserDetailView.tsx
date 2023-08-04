@@ -98,7 +98,6 @@ const UserDetailView = () => {
             <Spacer />
             {
               <HStack>
-                {/* <IconButton icon={<RepeatIcon />} colorScheme='whiteAlpha' variant='ghost' onClick={refresh} aria-label={'recargar informacion'} /> */}
                 <IconButton
                   icon={<EditIcon />}
                   isDisabled={password.state.loading}

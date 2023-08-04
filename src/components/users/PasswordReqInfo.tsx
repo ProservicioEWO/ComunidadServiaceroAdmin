@@ -21,9 +21,7 @@ const PasswordReqInfo = ({ children }: { children: ReactNode }) => {
           <UnorderedList>
             <ListItem>Consta de por lo menos 12 caracteres</ListItem>
             <ListItem>Contiene al menos 1 número</ListItem>
-            {/* <ListItem>Contiene al menos 1 carácter especial</ListItem> */}
             <ListItem>Contiene al menos una letra mayúscula</ListItem>
-            {/* <ListItem>Contiene al menos una letra minúscula</ListItem> */}
           </UnorderedList>
         </Box>
       }>

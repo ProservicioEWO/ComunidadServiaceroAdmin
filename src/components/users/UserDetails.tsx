@@ -57,12 +57,6 @@ const UserDetails = ({ data }: UserDetailsProps) => {
           <StatLabel>Tipo</StatLabel>
           <StatNumber>{type}</StatNumber>
         </Stat>
-        <Stat>
-          {/* <StatLabel>Contraseña</StatLabel>
-          <StatNumber>
-            <DisplayPassword value={password.value} isLoading={password.state.loading} />
-          </StatNumber> */}
-        </Stat>
       </HStack>
     </VStack>
   )
