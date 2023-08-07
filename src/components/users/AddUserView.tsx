@@ -30,7 +30,7 @@ import { User } from '../../models/User';
 import DesktopAnimation from '../../lotties/desktop_lottie_2.json'
 import useAuthContext from '../../hooks/useAuthContext';
 
-export interface NewUser extends Omit<User, 'enterprise'> {
+export interface NewUser extends Omit<User, 'enterprise' | 'id'> {
   enterpriseId: number
 }
 
@@ -46,14 +46,18 @@ export interface AddUserFormValues {
   enterpriseId: number
 }
 
-const createUserFromValues = (id: UUID, values: AddUserFormValues): NewUser => ({ id, ...values })
+const createUserFromValues = (values: AddUserFormValues): NewUser => ({ ...values })
 
 const AddUserView = () => {
   const { authSessionData: { accessToken, idToken } } = useAuthContext()
   const { newId, users } = useAppContext()
   const { errorToast, successToast } = useCustomToast()
   const [entities, setEntitites] = useState<string[]>([])
-  const { insertData, error: insertError } = useInsertData<NewUser>()
+  const {
+    insertData,
+    response,
+    error: insertError,
+  } = useInsertData<NewUser>()
   const {
     data,
     loading: fetchLoading,
@@ -70,12 +74,12 @@ const AddUserView = () => {
   const onSubmit = async (values: AddUserFormValues) => {
     const enterprise = data?.find(e => e.id === Number(values.enterpriseId))
     if (enterprise) {
-      const newUser = createUserFromValues(newId, values)
-      const ok = await insertData("/users", newUser, {
+      const newUser = createUserFromValues(values)
+      const responseData = await insertData("/users", newUser, {
         jwt: accessToken!
       })
-      if (ok) {
-        users.set([...(users.get ?? []), { ...newUser, enterprise }])
+      if (responseData) {
+        users.set([...(users.get ?? []), { ...newUser, id: responseData.id, enterprise }])
         successToast("Se ha insertado el usuario con exito")
         reset()
       }

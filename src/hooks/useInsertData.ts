@@ -13,6 +13,8 @@ const useInsertData = <T>() => {
   const insertData = async (endpoint: string, data: T, { jwt, method = 'POST' }: InsertOptions) => {
     setLoading(true)
     setError(null)
+    setResponse(null)
+    let resposeBody: { id: string } | null = null
     try {
       const response = await fetch(`${BASE_URL_API}${endpoint}`, {
         method,
@@ -23,11 +25,14 @@ const useInsertData = <T>() => {
         body: JSON.stringify(data)
       })
 
+      const json = await response.json() as { id: string }
+      
       if (!response.ok) {
         throw new Error("Error al instertar datos")
       }
 
-      setResponse(response)
+      setResponse(json)
+      resposeBody = json
     } catch (error) {
       setResponse(null)
       if (error instanceof Error) {
@@ -37,11 +42,10 @@ const useInsertData = <T>() => {
           setError(error.message)
         }
       }
-      return false
     } finally {
       setLoading(false)
     }
-    return true
+    return resposeBody
   }
 
   return { loading, error, response, insertData }
