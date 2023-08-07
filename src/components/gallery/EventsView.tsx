@@ -38,6 +38,7 @@ const EventsView = () => {
   const handleAdd = async ({ name }: NewEventValue) => {
     const newEvent = { id: newId, name }
     const ok = await insertData("/events", newEvent, {
+      method: 'PUT',
       jwt: accessToken!
     })
     if (ok) {
