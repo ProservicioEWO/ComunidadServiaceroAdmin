@@ -2,7 +2,6 @@ import useAppContext from '../../hooks/useAppContext';
 import {
   Card,
   CardBody,
-  Divider,
   Heading,
   HStack,
   Spinner,
@@ -67,7 +66,7 @@ const StatisticsUserDetail = () => {
               {
                 [
                   { field: 'id', header: 'ID' },
-                  { field: 'date', header: 'Fecha' },
+                  { field: 'date', header: 'Fecha y hora' },
                   { field: 'module.name', header: 'Módulo' }
                 ].map((col, i) => (
                   <Column

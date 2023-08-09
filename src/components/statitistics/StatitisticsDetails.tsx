@@ -108,7 +108,7 @@ const StatitisticsDetails = () => {
   }
 
   useEffect(() => {
-    logs.fetch(moduleId)
+    logs.fetch({ moduleId, type: 'M' })
   }, [moduleId])
 
   useEffect(() => {
@@ -116,7 +116,7 @@ const StatitisticsDetails = () => {
       new Date(date) >= new Date(logs.filters.value.dateStart) &&
       new Date(date) <= new Date(logs.filters.value.dateEnd)
     )) ?? []
-    const dataExport = logList.map<DataExcelRow>(({id, date, module, user}) => ({
+    const dataExport = logList.map<DataExcelRow>(({ id, date, module, user }) => ({
       id: id,
       username: user.username,
       date: date,

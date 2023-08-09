@@ -81,7 +81,7 @@ export interface AppContextValue {
       value: ContextLogFilters
     },
     set: ContextSetter<Log[]>,
-    fetch: (moduleId?: string) => Promise<void>
+    fetch: (params?:{moduleId?:string, type?:string}) => Promise<void>
   }
   modules: {
     state: ContextState,
@@ -142,7 +142,7 @@ export const AppContext = createContext<AppContextValue>({
     set: () => { }
   },
   logs: {
-    fetch: async (moduleId?: string) => { },
+    fetch: async (params?: { moduleId?: string, type?: string }) => { },
     state: { loading: true, error: null },
     list: null,
     set: () => { },
@@ -267,7 +267,7 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
         eventsLoading ||
         modulesLoading ||
         userInfoLoading ||
-        newsLoading || 
+        newsLoading ||
         testimonialsLoading
     },
     get newId() {
@@ -336,15 +336,15 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
       list: logs,
       state: { loading: logsLoading, error: logsError },
       set: setLogs,
-      fetch: async (moduleId?: string) => {
-        if (!moduleId) {
+      fetch: async (params?: { moduleId?: string, type?: string }) => {
+        if (!params) {
           await fetchLogs("/logs", {
             jwt: accessToken!
           })
         } else {
           await fetchLogs("/logs", {
             jwt: accessToken!,
-            query: { _append: ["module", "user"], moduleId }
+            query: { _append: ["module", "user"], ...params }
           })
         }
       },

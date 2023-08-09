@@ -36,7 +36,7 @@ const Filters = () => {
     const newStart = formatDateString(start)
     const newEnd = formatDateString(end)
     applyFilter(newStart, newEnd)
-    logs.fetch(moduleId)
+    logs.fetch({ moduleId, type: 'M' })
     logs.filters.set({
       moduleId,
       dateStart: newStart,
