@@ -11,6 +11,7 @@ import {
   CardBody,
   Divider,
   FormControl,
+  FormHelperText,
   Spinner,
   Text,
   VStack
@@ -100,10 +101,11 @@ const EventsDetailView = () => {
                 uploadImageState.loading
               }
               icon={AddIcon}
-              text="Agregar imagenes"
+              text="Agregar imágenes"
               onChange={async (files) => {
                 await handleFileChange(files)
               }} />
+              <FormHelperText>Es posible elegir varias imágenes</FormHelperText>
           </FormControl>
           <Divider />
           <Box position="relative">
