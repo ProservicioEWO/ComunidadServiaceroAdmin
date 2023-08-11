@@ -1,6 +1,6 @@
 import { fromCognitoIdentityPool } from "@aws-sdk/credential-providers"
 import { AddIcon } from "@chakra-ui/icons"
-import { Box, Divider, FormControl, Spinner, Text, VStack } from "@chakra-ui/react"
+import { Box, Divider, FormControl, FormHelperText, Spinner, Text, VStack } from "@chakra-ui/react"
 import useAuthContext from "../../../hooks/useAuthContext"
 import useCustomToast from "../../../hooks/useCustomToast"
 import useS3 from "../../../hooks/useS3"
@@ -64,6 +64,7 @@ const BannerView = () => {
           onChange={async (files) => {
             await handleFileChange(files)
           }} />
+          <FormHelperText>Es posible elegir varias imágenes</FormHelperText>
       </FormControl>
       <Divider />
       <Box position="relative">
