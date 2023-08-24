@@ -11,10 +11,7 @@ import {
 
 export interface AddCourseMenuProps {
   isDisabled?: boolean
-  onClick: {
-    internal: () => void,
-    external: () => void
-  }
+  onClick: (type: 'interno' | 'externo') => void
 }
 
 const AddCourseMenu = ({ onClick, isDisabled = false }: AddCourseMenuProps) => {
@@ -30,8 +27,8 @@ const AddCourseMenu = ({ onClick, isDisabled = false }: AddCourseMenuProps) => {
           </Text>
         </MenuButton>
         <MenuList>
-          <MenuItem onClick={onClick.internal}>Interno</MenuItem>
-          <MenuItem onClick={onClick.external}>Externo</MenuItem>
+          <MenuItem onClick={() => onClick('interno')}>Interno</MenuItem>
+          <MenuItem onClick={() => onClick('externo')}>Externo</MenuItem>
         </MenuList>
       </Menu>
     </Flex>

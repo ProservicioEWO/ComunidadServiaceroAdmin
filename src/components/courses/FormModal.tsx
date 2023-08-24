@@ -1,14 +1,17 @@
+import Lottie from 'lottie-react';
+import SettingLoadingAnimation from '../../lotties/setting-loading.json';
 import {
+  Box,
   Button,
   Divider,
+  Flex,
   Modal,
   ModalBody,
   ModalCloseButton,
   ModalContent,
   ModalFooter,
   ModalHeader,
-  ModalOverlay,
-  ModalProps
+  ModalOverlay
 } from '@chakra-ui/react';
 import { ReactNode } from 'react';
 
@@ -16,42 +19,59 @@ export interface FormModalProps {
   title: string
   isOpen: boolean
   isSubmitting: boolean
+  isLoading: boolean
+  mode: 'edit' | 'set'
   children: ReactNode | ReactNode[]
   onClose: () => void
   onConfirm: () => void
 }
 
-const FormModal = ({ title, isOpen, isSubmitting, children, onClose, onConfirm }: FormModalProps) => {
+const FormModal = ({ title, isOpen, isSubmitting, isLoading, mode, children, onClose, onConfirm }: FormModalProps) => {
   return (
     <Modal
-      size='6xl'
+      size={mode === 'edit' ? (isLoading ? 'md' : 'full') : 'full'}
       isOpen={isOpen}
-      onClose={onClose}>
+      onClose={onClose}
+      scrollBehavior="inside">
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>
           {title}
         </ModalHeader>
-        <ModalCloseButton isDisabled={isSubmitting}/>
+        <ModalCloseButton isDisabled={isSubmitting} />
         <Divider />
         <ModalBody>
-          {children}
+          {
+            mode === 'edit' ?
+              (
+                isLoading ?
+                  <Box w="full">
+                    <Flex boxSize="full" align="center" justify="center">
+                      <Lottie animationData={SettingLoadingAnimation} />
+                    </Flex>
+                  </Box> :
+                  children
+              ) : children
+          }
         </ModalBody>
-        <ModalFooter>
-          <Button
-            isDisabled={isSubmitting}
-            colorScheme='red'
-            mr={3}
-            onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button
-          isLoading={isSubmitting}
-          loadingText='Creando' 
-          onClick={onConfirm}>
-            Aceptar
-          </Button>
-        </ModalFooter>
+        {
+          !isLoading &&
+          <ModalFooter>
+            <Button
+              isDisabled={isSubmitting}
+              colorScheme='red'
+              mr={3}
+              onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button
+              isLoading={isSubmitting}
+              loadingText='Guardando'
+              onClick={onConfirm}>
+              Aceptar
+            </Button>
+          </ModalFooter>
+        }
       </ModalContent>
     </Modal>
   )

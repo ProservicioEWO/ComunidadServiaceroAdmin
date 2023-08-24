@@ -24,7 +24,7 @@ import useDeleteData from '../../hooks/useDelete';
 import useAuthContext from '../../hooks/useAuthContext';
 
 export interface LocationParams extends Record<string, string> {
-  cityId: string
+  siteId: string
 }
 
 const filterCallback = (search: string) => {
@@ -39,7 +39,7 @@ const LocationDetailView = () => {
   const { newId } = useAppContext()
   const { successToast, errorToast } = useCustomToast()
   const [searchValue, setSearchValue] = useState("")
-  const { cityId } = useParams<LocationParams>()
+  const { siteId } = useParams<LocationParams>()
   const {
     error: insertError,
     loading: insertLoading,
@@ -81,7 +81,7 @@ const LocationDetailView = () => {
     const newLoc = {
       id,
       name,
-      cityId,
+      siteId,
       imageKey: file[0].name,
       videoKey: ''
     } as Location
@@ -95,9 +95,9 @@ const LocationDetailView = () => {
       const okS3 = await uploadImages(file)
       if (okS3) {
         successToast("Se agregó la nueva instalación con éxito")
-        fetchData("/cities/:id/locations", {
+        fetchData("/sites/:id/locations", {
           jwt: accessToken!,
-          param: { id: cityId }
+          param: { id: siteId }
         })
       }
     }
@@ -110,9 +110,9 @@ const LocationDetailView = () => {
     if (ok) {
       const _ok = await deleteImage(imageKey)
       if (_ok) {
-        fetchData("/cities/:id/locations", {
+        fetchData("/sites/:id/locations", {
           jwt: accessToken!,
-          param: { id: cityId }
+          param: { id: siteId }
         })
         successToast("El elemento se borro la instalación con éxito.")
       }
@@ -120,11 +120,11 @@ const LocationDetailView = () => {
   }
 
   useEffect(() => {
-    fetchData("/cities/:id/locations", {
+    fetchData("/sites/:id/locations", {
       jwt: accessToken!,
-      param: { id: cityId }
+      param: { id: siteId }
     })
-  }, [cityId])
+  }, [siteId])
 
   useEffect(() => {
     if (error) {

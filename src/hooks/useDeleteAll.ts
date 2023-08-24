@@ -5,14 +5,14 @@ export interface DeleteOptions {
   jwt: string
 }
 
-const useDeleteData = () => {
+const useDeleteAll = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const deleteData = async (endpoint: string, id: string | number, { jwt }: DeleteOptions) => {
+  const deleteAll = async (endpoint: string, { jwt }: DeleteOptions) => {
     setLoading(true)
     try {
-      const response = await fetch(`${BASE_URL_API}${endpoint}/${id}`, {
+      const response = await fetch(`${BASE_URL_API}${endpoint}`, {
         method: 'DELETE',
         headers: {
           "Content-Type": "application/json",
@@ -27,7 +27,7 @@ const useDeleteData = () => {
         if (error.message === 'Failed to fetch') {
           setError('No se pudo conectar al servidor. Por favor, revise su conexión de red.')
         } else {
-          setError(`Ocurrió un error al eliminar el elemento. CODE: ${error.message}`)
+          setError(`Ocurrió un error al borrar. CODE: ${error.message}`)
         }
       }
       return false
@@ -37,7 +37,7 @@ const useDeleteData = () => {
     return true
   }
 
-  return { loading, error, deleteData }
+  return { loading, error, deleteAll }
 }
 
-export default useDeleteData
+export default useDeleteAll

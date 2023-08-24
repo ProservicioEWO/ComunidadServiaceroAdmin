@@ -25,6 +25,7 @@ import { User } from '../models/User';
 import { AuthSessionData } from './AuthContextProvider';
 import { News } from '../models/News';
 import { Testimonial } from '../models/Testimonial';
+import { Site } from '../models/Site';
 
 export interface ContextLogFilters {
   dateStart: string
@@ -54,13 +55,18 @@ export interface AppContextValue {
   }
   locations: {
     state: ContextState
-    fetch: (cityId?: string) => Promise<void>,
+    fetch: () => Promise<void>,
     list: Location[] | null
   }
   cities: {
     state: ContextState,
     get: City[] | null,
     set: ContextSetter<City[]>
+  }
+  sites: {
+    state: ContextState,
+    get: Site[] | null,
+    set: ContextSetter<Site[]>
   }
   events: {
     state: ContextState,
@@ -121,11 +127,16 @@ export const AppContext = createContext<AppContextValue>({
     state: { loading: true, error: null },
   },
   locations: {
-    fetch: async (cityId?: string) => { },
+    fetch: async () => { },
     list: null,
     state: { loading: true, error: null }
   },
   cities: {
+    state: { loading: true, error: null },
+    get: null,
+    set: () => { }
+  },
+  sites: {
     state: { loading: true, error: null },
     get: null,
     set: () => { }
@@ -195,6 +206,12 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
     fetchData: fetchCities
   } = useFetch<City[]>()
   const {
+    data: sitesData,
+    loading: sitesLoading,
+    error: sitesError,
+    fetchData: fetchSites
+  } = useFetch<Site[]>()
+  const {
     data: locationsData,
     loading: locationsLoading,
     error: locationsError,
@@ -245,6 +262,7 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
 
   const [users, setUsers] = useState<User[]>([])
   const [cities, setCities] = useState<City[]>([])
+  const [sites, setSites] = useState<Site[]>([])
   const [locations, setLocations] = useState<Location[]>([])
   const [events, setEvents] = useState<Event[]>([])
   const [programs, setPrograms] = useState<(ExternalProgram | InternalProgram)[]>([])
@@ -295,10 +313,9 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
       value: password
     },
     locations: {
-      fetch: async (cityId?: string) => {
-        await fetchLocations("/cities/:cityId/locations", {
-          jwt: accessToken!,
-          param: { cityId }
+      fetch: async () => {
+        await fetchLocations("/locations", {
+          jwt: accessToken!
         })
       },
       state: { loading: locationsLoading, error: locationsError },
@@ -308,6 +325,11 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
       state: { loading: citiesLoading, error: citiesError },
       get: cities,
       set: setCities
+    },
+    sites: {
+      state: { loading: sitesLoading, error: sitesError },
+      get: sites,
+      set: setSites
     },
     events: {
       state: { loading: eventsLoading, error: eventsError },
@@ -397,6 +419,9 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
       cities,
       citiesLoading,
       citiesError,
+      sites,
+      sitesLoading,
+      sitesError,
       locations,
       locationsLoading,
       locationsError,
@@ -437,6 +462,9 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
     fetchCities("/cities", {
       jwt: accessToken!
     })
+    fetchSites("/sites", {
+      jwt: accessToken!
+    })
     fetchEvents("/events", {
       jwt: accessToken!
     })
@@ -469,6 +497,12 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
       setCities(citiesData)
     }
   }, [citiesData])
+  
+  useEffect(() => {
+    if (sitesData) {
+      setSites(sitesData)
+    }
+  }, [sitesData])
 
   useEffect(() => {
     if (locationsData) {

@@ -43,9 +43,11 @@ const DataListItem = (({ children, loading, options, onDelete, ...props }: DataL
       p="4"
       align='stretch'
       alignItems='center'
-      _hover={hover} {...props}
+      _hover={hover}
+      cursor="pointer"
       onMouseEnter={setShowButton.on}
-      onMouseLeave={setShowButton.off}>
+      onMouseLeave={setShowButton.off}
+      {...props}>
       {children}
       <Spacer />
       <SlideFade in={showButton} offsetX="20px" offsetY="0">
@@ -77,7 +79,8 @@ const DataListItem = (({ children, loading, options, onDelete, ...props }: DataL
                   isLoading={loading}
                   loadingText="Borrando"
                   ml={3}
-                  onClick={async () => {
+                  onClick={async (e) => {
+                    e.preventDefault()
                     await onDelete()
                     onClose()
                   }}>

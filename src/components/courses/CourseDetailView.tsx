@@ -5,9 +5,13 @@ import ExternalForm, { ExternalFormValues } from './ExternalForm';
 import FormModal from './FormModal';
 import InternalForm, { InternalFormValues } from './InternalForm';
 import useAppContext from '../../hooks/useAppContext';
+import useAuthContext from '../../hooks/useAuthContext';
 import useCustomToast from '../../hooks/useCustomToast';
+import useDeleteData from '../../hooks/useDelete';
+import useFetch from '../../hooks/useFetch';
 import useInsertData from '../../hooks/useInsertData';
 import { AiFillFire } from 'react-icons/ai';
+import { AnyProgram, InputChangeEvent } from '../../shared/typeAlias';
 import {
   Badge,
   HStack,
@@ -18,7 +22,6 @@ import {
 } from '@chakra-ui/react';
 import { DeleteIcon } from '@chakra-ui/icons';
 import { ExternalProgram } from '../../models/ExternalProgram';
-import { InputChangeEvent } from '../../shared/typeAlias';
 import { InternalProgram } from '../../models/InternalProgram';
 import { Program, ProgramType } from '../../models/Program';
 import {
@@ -28,8 +31,7 @@ import {
   useState
 } from 'react';
 import { useParams } from 'react-router-dom';
-import useDeleteData from '../../hooks/useDelete';
-import useAuthContext from '../../hooks/useAuthContext';
+
 
 export interface CourseParams extends Record<string, string> {
   cityId: string
@@ -43,7 +45,7 @@ const filterCallback = (search: string) => {
   )
 }
 
-const getPrgramInfo = (type: ProgramType) => {
+const getProgramInfo = (type: ProgramType) => {
   switch (type) {
     case ProgramType.internal:
       return {
@@ -64,6 +66,10 @@ const getPrgramInfo = (type: ProgramType) => {
 const CourseDetailView = () => {
   const { authSessionData: { accessToken } } = useAuthContext()
   const { newId, programs } = useAppContext()
+  const [formType, setFormType] = useState<'interno' | 'externo'>()
+  const [modalMode, setModalMode] = useState<'edit' | 'set'>('set')
+  const [editId, setEditId] = useState<string>()
+  const [initValues, setInitValues] = useState<AnyProgram>()
   const [searchValue, setSearchValue] = useState("")
   const { successToast, errorToast } = useCustomToast()
   const { cityId, sectionId } = useParams<CourseParams>()
@@ -73,19 +79,20 @@ const CourseDetailView = () => {
     deleteData
   } = useDeleteData()
   const {
+    data: programData,
+    error: programError,
+    loading: programLoading,
+    fetchData: fetchProgram
+  } = useFetch<AnyProgram>()
+  const {
     insertData,
     loading: loadingInsert,
     error: errorInsert
-  } = useInsertData<InternalProgram | ExternalProgram>()
+  } = useInsertData<AnyProgram>()
   const {
-    isOpen: isOpenI,
-    onOpen: onOpenI,
-    onClose: onCloseI
-  } = useDisclosure()
-  const {
-    isOpen: isOpenE,
-    onOpen: onOpenE,
-    onClose: onCloseE
+    isOpen,
+    onOpen,
+    onClose
   } = useDisclosure()
   const formRefI = useRef<HTMLFormElement>(null)
   const formRefE = useRef<HTMLFormElement>(null)
@@ -111,8 +118,15 @@ const CourseDetailView = () => {
   }
 
   const handleSubmitI = async (values: InternalFormValues) => {
+    if (!editId) {
+      errorToast(
+        `Error: ID del programa no encontrado. 
+        Por favor, inténtelo nuevamente; si el problema continúa, contacte a TI.`
+      )
+      return
+    }
     const newProgram: InternalProgram = {
-      id: newId,
+      id: modalMode === 'edit' ? editId : newId,
       cityId: cityId ?? "",
       section: Number(sectionId),
       type: ProgramType.internal,
@@ -123,15 +137,31 @@ const CourseDetailView = () => {
       method: 'PUT'
     })
     if (ok) {
-      programs.set([...(programs.list ?? []), newProgram])
-      successToast("Se creó el programa exitosamente.")
-      onCloseI()
+      if (modalMode === 'edit') {
+        const newProgramsList = programs.list?.map(e => (
+          e.id === editId ? { ...newProgram, id: editId } : e
+        ))
+        if (newProgramsList) {
+          programs.set(newProgramsList)
+        }
+      } else {
+        programs.set([...(programs.list ?? []), newProgram])
+        successToast("Se creó el programa exitosamente.")
+      }
+      onClose()
     }
   }
 
   const handleSubmitE = async (values: ExternalFormValues) => {
+    if (!editId) {
+      errorToast(
+        `Error: ID del programa no encontrado. 
+        Por favor, inténtelo nuevamente; si el problema continúa, contacte a TI.`
+      )
+      return
+    }
     const newProgram: ExternalProgram = {
-      id: newId,
+      id: modalMode === 'edit' ? editId : newId,
       cityId: cityId ?? "",
       section: Number(sectionId),
       type: ProgramType.external,
@@ -142,9 +172,18 @@ const CourseDetailView = () => {
       method: 'PUT'
     })
     if (ok) {
-      programs.set([...(programs.list ?? []), newProgram])
-      successToast("Se creó el programa exitosamente.")
-      onCloseE()
+      if (modalMode === 'edit') {
+        const newProgramsList = programs.list?.map(e => (
+          e.id === editId ? { ...newProgram, id: editId } : e
+        ))
+        if (newProgramsList) {
+          programs.set(newProgramsList)
+        }
+      } else {
+        programs.set([...(programs.list ?? []), newProgram])
+        successToast("Se creó el programa exitosamente.")
+      }
+      onClose()
     }
   }
 
@@ -152,13 +191,29 @@ const CourseDetailView = () => {
     const ok = await deleteData("/programs", id, {
       jwt: accessToken!
     })
-
     if (ok) {
       const filtered = programs.list?.filter(e => e.id != id) ?? []
       programs.set([...filtered])
       successToast("El programa se elimino con éxito.")
     }
   }
+
+  const handleClickItem = async (id: string) => {
+    onOpen()
+    setEditId(id)
+    setModalMode('edit')
+    await fetchProgram(`/programs/:id`, {
+      jwt: accessToken!,
+      param: { id }
+    })
+  }
+
+  useEffect(() => {
+    if (programData) {
+      setInitValues(programData)
+      setFormType(programData.type === ProgramType.internal ? 'interno' : 'externo')
+    }
+  }, [programData])
 
   useEffect(() => {
     if (sectionId) {
@@ -170,46 +225,51 @@ const CourseDetailView = () => {
     if (deleteError) {
       errorToast(deleteError)
     }
-  }, [deleteError])
 
-  useEffect(() => {
     if (errorInsert) {
       errorToast(errorInsert)
     }
-  }, [errorInsert])
+
+    if (programError) {
+      errorToast(programError)
+      onClose()
+    }
+  }, [deleteError, errorInsert, programError])
 
   return (
     <>
       <FormModal
-        isOpen={isOpenI}
+        mode={modalMode}
+        isOpen={isOpen}
         isSubmitting={loadingInsert}
-        onClose={onCloseI}
-        onConfirm={handleConfirmI}
-        title='Configuración de programa (interno)'>
-        <InternalForm
-          formRef={formRefI}
-          onSubmit={handleSubmitI}
-          onError={() => console.log("hubo un error")} />
-      </FormModal>
-      <FormModal
-        isOpen={isOpenE}
-        isSubmitting={loadingInsert}
-        onClose={onCloseE}
-        onConfirm={handleConfirmE}
-        title='Configuración de programa (externo)'>
-        <ExternalForm
-          formRef={formRefE}
-          onSubmit={handleSubmitE}
-          onError={() => { }} />
+        isLoading={programLoading}
+        onClose={onClose}
+        onConfirm={formType === 'interno' ? handleConfirmI : handleConfirmE}
+        title={formType ? `Configuración de programa (${formType})` : 'Cargando...'}>
+        {
+          formType === 'interno' ?
+            <InternalForm
+              ref={formRefI}
+              init={initValues as InternalFormValues}
+              onSubmit={handleSubmitI}
+              onError={() => console.log("hubo un error en form interno")} /> :
+            <ExternalForm
+              ref={formRefE}
+              init={initValues as ExternalFormValues}
+              onSubmit={handleSubmitE}
+              onError={() => console.log("hubo un error en form externo")} />
+        }
       </FormModal>
       <VStack align="stretch">
         {
           sectionId &&
           <AddCourseMenu
             isDisabled={programs.state.loading}
-            onClick={{
-              internal: onOpenI,
-              external: onOpenE
+            onClick={(type) => {
+              setModalMode('set')
+              setInitValues(undefined)
+              setFormType(type)
+              onOpen()
             }} />
         }
         {
@@ -226,7 +286,10 @@ const CourseDetailView = () => {
                 <DataListItem
                   key={program.id}
                   loading={deleteLoading}
-                  onDelete={async () => await handleDelete(program.id)}
+                  onDelete={async () => {
+                    await handleDelete(program.id)
+                  }}
+                  onClick={async () => await handleClickItem(program.id)}
                   options={{
                     icon: <DeleteIcon color="red.500" />
                   }}>
@@ -235,8 +298,8 @@ const CourseDetailView = () => {
                     <Text>{program.shortName}</Text>
                     <Badge
                       rounded="2xl"
-                      colorScheme={getPrgramInfo(program.type).colorScheme}>
-                      {getPrgramInfo(program.type).typename}
+                      colorScheme={getProgramInfo(program.type).colorScheme}>
+                      {getProgramInfo(program.type).typename}
                     </Badge>
                   </HStack>
                 </DataListItem>

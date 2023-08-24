@@ -56,6 +56,7 @@ const AddUserView = () => {
   const {
     insertData,
     response,
+    loading: insertLoading,
     error: insertError,
   } = useInsertData<NewUser>()
   const {
@@ -236,7 +237,7 @@ const AddUserView = () => {
             type="submit"
             bg="purple.600"
             isDisabled={fetchLoading || !!fetchError}
-            isLoading={isSubmitting}
+            isLoading={insertLoading}
             loadingText="Creando usuario"
             leftIcon={<AddIcon />}
             textColor="white">

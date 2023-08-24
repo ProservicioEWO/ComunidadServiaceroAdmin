@@ -71,7 +71,7 @@ const App = () => {
         </Route>
         <Route path='locations' element={<Locations />}>
           <Route index element={<SectionIndex message='Selecciona una ciudad para administrar las instalaciones' />} />
-          <Route path=":cityId" element={<LocationDetailView />} />
+          <Route path=":siteId" element={<LocationDetailView />} />
         </Route>
         <Route path='courses' element={<Courses />}>
           <Route index element={<SectionIndex message='Selecciona una ciudad para administrar los programas' />} />

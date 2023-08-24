@@ -51,7 +51,7 @@ const comunidadTheme = extendTheme({
                 ...activeLabelStyles
               }
             },
-            "input:not(:placeholder-shown) + label, .chakra-select__wrapper + label, textarea:not(:placeholder-shown) ~ label": {
+            "input:not(:placeholder-shown) + label, .chakra-select__wrapper + label, textarea:not(:placeholder-shown) ~ label, .chakra-input__group > .chakra-input__left-element + input:not(:placeholder-shown) + label": {
               ...activeLabelStyles
             },
             label: {
@@ -77,7 +77,7 @@ const comunidadTheme = extendTheme({
                 ...activeLabelLeftStyles
               }
             },
-            "input:not(:placeholder-shown) + label, .chakra-select__wrapper + label, textarea:not(:placeholder-shown) ~ label": {
+            "input:not(:placeholder-shown) + label, .chakra-select__wrapper + label, textarea:not(:placeholder-shown) ~ label, .chakra-input__group > .chakra-input__left-element + input:not(:placeholder-shown) + label": {
               ...activeLabelLeftStyles
             },
             label: {

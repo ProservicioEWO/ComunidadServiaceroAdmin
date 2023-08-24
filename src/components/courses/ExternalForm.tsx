@@ -1,5 +1,3 @@
-import ColorInput from '../ColorInput';
-import randomColor from 'randomcolor';
 import { AiOutlineMail, AiOutlinePhone } from 'react-icons/ai';
 import {
   Box,
@@ -12,22 +10,19 @@ import {
   Input,
   InputGroup,
   InputLeftElement,
-  Spacer,
-  Switch,
   Textarea,
   VStack
 } from '@chakra-ui/react';
-import { Controller, useForm } from 'react-hook-form';
 import { MdInsertLink } from 'react-icons/md';
-import { RefObject, useEffect, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import { ForwardedRef, forwardRef, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { getSimpleId } from '../../shared/utils';
 
 export interface ExternalFormValues {
   simpleId: string
   name: string
   shortName: string
   description: string
-  auto: boolean
   institution: string
   websiteLink: string
   email: string
@@ -37,37 +32,35 @@ export interface ExternalFormValues {
   advantage: string
   rulesLink: string
   mainLink: string
-  color: string
 }
 
 export interface ExternalFormProps {
-  formRef: RefObject<HTMLFormElement>
+  init?: ExternalFormValues
   onSubmit: (values: ExternalFormValues) => Promise<void>
   onError: () => void
 }
 
-const ExternalForm = ({ formRef, onSubmit, onError }: ExternalFormProps) => {
-  const [idValue, setIdValue] = useState("")
-  const { control, formState: { errors }, register, handleSubmit } = useForm<ExternalFormValues>()
+const ExternalForm = forwardRef(({ init, onSubmit, onError }: ExternalFormProps, ref: ForwardedRef<HTMLFormElement>) => {
+  const { formState: { errors }, register, handleSubmit, setValue, reset } = useForm<ExternalFormValues>()
 
   useEffect(() => {
-    const currentDate = new Date()
-    const time = String(currentDate.getTime())
-    const numeric = time.slice(time.length - 5, time.length - 1)
-    const unique = uuidv4().slice(0, 4)
-    setIdValue('PE-' + numeric + unique)
+    if(init){
+      reset(init)
+    }else{
+      setValue("simpleId", 'PE-' + getSimpleId())
+    }
   }, [])
 
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit(onSubmit, onError)}>
+    <form ref={ref} onSubmit={handleSubmit(onSubmit, onError)}>
       <VStack align='stretch' spacing="4">
         <HStack>
           <HStack>
             <Box>
               <InputGroup>
-                <InputLeftElement children='Id:' />
-                <Input readOnly variant='filled' value={idValue} {...register("simpleId")} />
+                <InputLeftElement fontWeight="extrabold" children='Id:' />
+                <Input readOnly variant='filled' {...register("simpleId")} />
               </InputGroup>
             </Box>
           </HStack>
@@ -186,7 +179,7 @@ const ExternalForm = ({ formRef, onSubmit, onError }: ExternalFormProps) => {
       </VStack>
     </form >
   )
-}
+})
 
 export default ExternalForm
 

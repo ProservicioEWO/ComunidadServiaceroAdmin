@@ -1,15 +1,11 @@
-import CitiesView from '../components/CitiesView';
-import { Box, Card, CardBody, HStack, Text } from '@chakra-ui/react';
-import { Outlet, useParams } from 'react-router-dom';
-import { LocationParams } from '../components/locations/LocationDetailView';
-import useAppContext from '../hooks/useAppContext';
+import SitesView from '../components/SitesView';
+import { Box, HStack } from '@chakra-ui/react';
+import { Outlet } from 'react-router-dom';
 
 const Locations = () => {
-  const { cityId } = useParams<LocationParams>()
-  const { cities } = useAppContext()
   return (
     <HStack align="stretch" w="full">
-      <CitiesView />
+      <SitesView />
       <Box w="full">
         <Outlet />
       </Box>

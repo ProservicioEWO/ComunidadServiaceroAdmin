@@ -24,13 +24,13 @@ const useInsertData = <T>() => {
         },
         body: JSON.stringify(data)
       })
-
-      const json = await response.json() as { id: string }
       
       if (!response.ok) {
         throw new Error("Error al instertar datos")
       }
 
+      const json = await response.json() as { id: string }
+      
       setResponse(json)
       resposeBody = json
     } catch (error) {

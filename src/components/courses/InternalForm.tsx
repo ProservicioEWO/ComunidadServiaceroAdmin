@@ -1,9 +1,13 @@
 import HTMLEditor from './HTMLEditor';
+import randomColor from 'randomcolor';
+import useAppContext from '../../hooks/useAppContext';
 import {
   Box,
   Divider,
+  Flex,
   FormControl,
   FormErrorMessage,
+  FormHelperText,
   FormLabel,
   Heading,
   HStack,
@@ -18,16 +22,13 @@ import {
   Textarea,
   VStack
 } from '@chakra-ui/react';
-import { Controller, useForm } from 'react-hook-form';
-import { MdInsertLink } from 'react-icons/md';
-import { RefObject, useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { LocationParams } from '../locations/LocationDetailView';
-import useAppContext from '../../hooks/useAppContext';
 import { ChevronDownIcon } from '@chakra-ui/icons';
-import ColorInput from '../ColorInput';
-import randomColor from 'randomcolor';
-import { v4 as uuidv4 } from 'uuid';
+import { Controller, useForm } from 'react-hook-form';
+import { getSimpleId } from '../../shared/utils';
+import { LocationParams } from '../locations/LocationDetailView';
+import { MdInsertLink } from 'react-icons/md';
+import { RefObject, useEffect, forwardRef, ForwardedRef } from 'react';
+import { useParams } from 'react-router-dom';
 
 export interface InternalFormValues {
   simpleId: string
@@ -50,38 +51,38 @@ export interface InternalFormValues {
 }
 
 export interface InternalFormProps {
-  formRef: RefObject<HTMLFormElement>
+  init?: InternalFormValues
   onSubmit: (values: InternalFormValues) => Promise<void>
   onError: () => void
 }
 
-const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
-  const [idValue, setIdValue] = useState("")
+const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps, ref: ForwardedRef<HTMLFormElement>) => {
   const { cityId } = useParams<LocationParams>()
   const { locations } = useAppContext()
-  const { control, formState: { errors }, register, handleSubmit } = useForm<InternalFormValues>()
+  const { control, formState: { errors }, register, handleSubmit, setValue, reset } = useForm<InternalFormValues>()
 
   useEffect(() => {
-    const currentDate = new Date()
-    const time = String(currentDate.getTime())
-    const numeric = time.slice(time.length - 5, time.length - 1)
-    const unique = uuidv4().slice(0, 4)
-    setIdValue('PI-' + numeric + unique)
+    if (init) {
+      reset(init)
+    } else {
+      setValue("simpleId", 'PI-' + getSimpleId())
+      setValue("color", randomColor())
+    }
   }, [])
 
   useEffect(() => {
-    locations.fetch(cityId)
+    locations.fetch()
   }, [cityId])
 
   return (
-    <form ref={formRef} onSubmit={handleSubmit(onSubmit, onError)}>
+    <form ref={ref} onSubmit={handleSubmit(onSubmit, onError)}>
       <VStack align='stretch' spacing={4}>
         <HStack>
           <HStack>
             <Box>
               <InputGroup>
-                <InputLeftElement children='Id:' />
-                <Input readOnly variant='filled' value={idValue} {...register("simpleId")} />
+                <InputLeftElement fontWeight="extrabold" children='Id:' />
+                <Input readOnly variant='filled' {...register("simpleId")} />
               </InputGroup>
             </Box>
             <Box>
@@ -89,10 +90,31 @@ const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
                 <Controller
                   name='color'
                   control={control}
-                  render={({ field: { onChange } }) => (
-                    <ColorInput
-                      value={randomColor()}
-                      onColorChange={onChange} />
+                  render={({ field: { onChange, value } }) => (
+                    <FormControl>
+                      <Flex>
+                        <FormLabel
+                          htmlFor="color"
+                          shadow="sm"
+                          boxSize="2em"
+                          border="1px"
+                          borderColor="gray.100"
+                          borderRadius="full"
+                          cursor="pointer"
+                          mb={0}
+                          bg={value} />
+                        <Input
+                          id='color'
+                          type='color'
+                          border='none'
+                          visibility='hidden'
+                          m={0}
+                          w={0}
+                          h={0}
+                          p={0}
+                          onChange={onChange} />
+                      </Flex>
+                    </FormControl>
                   )} />
               </Box>
             </Box>
@@ -100,7 +122,7 @@ const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
           <Spacer />
           <Box>
             <FormControl display="flex" alignItems="center">
-              <FormLabel htmlFor="is-auto">
+              <FormLabel htmlFor="is-auto" my={0}>
                 Ocultar automáticamente
               </FormLabel>
               <Switch {...register("auto")} id="is-auto" />
@@ -140,8 +162,9 @@ const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
             name='plan'
             control={control}
             rules={{ required: true }}
-            render={({ field: { onChange } }) => (
+            render={({ field: { value, onChange } }) => (
               <HTMLEditor
+                value={value}
                 isInvalid={!!errors.plan}
                 errorMessage='Introduce un contenido para el plan curricular del programa'
                 onChange={onChange} />
@@ -154,8 +177,9 @@ const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
             name='req'
             control={control}
             rules={{ required: true }}
-            render={({ field: { onChange } }) => (
+            render={({ field: { value, onChange } }) => (
               <HTMLEditor
+                value={value}
                 isInvalid={!!errors.plan}
                 errorMessage='Introduce los requisitos del programa'
                 onChange={onChange} />
@@ -236,7 +260,7 @@ const InternalForm = ({ formRef, onSubmit, onError }: InternalFormProps) => {
       </VStack>
     </form>
   )
-}
+})
 
 export default InternalForm
 

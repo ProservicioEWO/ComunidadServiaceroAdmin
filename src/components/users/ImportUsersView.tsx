@@ -64,6 +64,12 @@ const ImportUsersView = () => {
   }
 
   useEffect(() => {
+    if(batchError){
+      errorToast(batchError)
+    }
+  }, [batchError])
+
+  useEffect(() => {
     if (batchResponse) {
       console.log(batchResponse)
     }

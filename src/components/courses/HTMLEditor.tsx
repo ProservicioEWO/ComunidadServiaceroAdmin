@@ -5,10 +5,11 @@ import { useEffect, useState } from 'react';
 export interface HTMLEditorProps {
   isInvalid: boolean
   errorMessage: string
+  value?: string
   onChange: (value: string) => void
 }
 
-const HTMLEditor = ({ isInvalid, errorMessage, onChange }: HTMLEditorProps) => {
+const HTMLEditor = ({ isInvalid, errorMessage, value, onChange }: HTMLEditorProps) => {
 
   const handleEditorChange = (value: string) => {
     onChange(value)
@@ -21,6 +22,7 @@ const HTMLEditor = ({ isInvalid, errorMessage, onChange }: HTMLEditorProps) => {
         borderRadius="xl"
         borderColor={isInvalid ? "#E53E3E" : "transparent"}>
         <Editor
+          value={value}
           onEditorChange={handleEditorChange}
           apiKey="ap0y95hao27a72hufoc684uiwtq58nezzae21i1usjd9h7ic"
           init={{

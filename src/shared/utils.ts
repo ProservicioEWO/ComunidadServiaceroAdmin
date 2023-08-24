@@ -1,4 +1,5 @@
 import { theme } from '@chakra-ui/react';
+import { v4 as uuidv4 } from 'uuid';
 
 export function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -43,4 +44,13 @@ export async function getBase64(file: File) {
       reject(error)
     }
   })
+}
+
+export function getSimpleId() {
+  const currentDate = new Date()
+  const time = String(currentDate.getTime())
+  const numeric = time.slice(time.length - 5, time.length - 1)
+  const unique = uuidv4().slice(0, 4)
+
+  return numeric + unique
 }
