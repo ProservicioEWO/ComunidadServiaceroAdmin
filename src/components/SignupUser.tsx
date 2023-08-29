@@ -13,12 +13,15 @@ import {
   MenuList,
   Spinner,
   Text,
+  useDisclosure,
   VStack
 } from '@chakra-ui/react';
 import { useCallback, useEffect } from 'react';
+import EnterprisesConfigView from './enterprises-config/EnterprisesConfigView';
 
 const SignupUser = () => {
-  const { authSessionData, signOut } = useAuthContext()
+  const { isOpen, onOpen, onClose } = useDisclosure()
+  const { signOut } = useAuthContext()
   const { userInfo } = useAppContext()
   const { closeAll } = useCustomToast()
 
@@ -34,36 +37,39 @@ const SignupUser = () => {
   }
 
   return (
-    <HStack>
-      <VStack align="end" spacing="0">
-        {
-          userInfo.data &&
-          <Box>
-            <Text fontSize="sm" as="b">{`${userInfo.data.name} ${userInfo.data.lastname}`}</Text>
-            <Text fontSize="xs">{userInfo.data.username}</Text>
-          </Box>
-        }
-      </VStack>
-      <Menu>
-        <MenuButton>
-          <HStack>
-            {
-              userInfo.data &&
-              <Avatar name={`${userInfo.data.name} ${userInfo.data.lastname}`} src={"photoUrl"} />
-            }
-          </HStack>
-        </MenuButton>
-        <MenuList>
-          <MenuGroup title="Administrar">
-            <MenuItem>Empresas</MenuItem>
-          </MenuGroup>
-          <MenuDivider />
-          <MenuItem>Logs</MenuItem>
-          <MenuDivider />
-          <MenuItem onClick={handleSignOut}>Cerrar Sesión</MenuItem>
-        </MenuList>
-      </Menu>
-    </HStack >
+    <>
+      <HStack>
+        <VStack align="end" spacing="0">
+          {
+            userInfo.data &&
+            <Box>
+              <Text fontSize="sm" as="b">{`${userInfo.data.name} ${userInfo.data.lastname}`}</Text>
+              <Text fontSize="xs">{userInfo.data.username}</Text>
+            </Box>
+          }
+        </VStack>
+        <Menu>
+          <MenuButton>
+            <HStack>
+              {
+                userInfo.data &&
+                <Avatar name={`${userInfo.data.name} ${userInfo.data.lastname}`} src={"photoUrl"} />
+              }
+            </HStack>
+          </MenuButton>
+          <MenuList>
+            <MenuGroup title="Administrar">
+              <MenuItem onClick={onOpen}>Empresas</MenuItem>
+            </MenuGroup>
+            <MenuDivider />
+            <MenuItem>Logs</MenuItem>
+            <MenuDivider />
+            <MenuItem onClick={handleSignOut}>Cerrar Sesión</MenuItem>
+          </MenuList>
+        </Menu>
+      </HStack>
+      <EnterprisesConfigView isOpen={isOpen} onClose={onClose} />
+    </>
   )
 }
 

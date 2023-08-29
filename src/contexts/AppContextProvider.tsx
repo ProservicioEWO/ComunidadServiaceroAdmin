@@ -1,4 +1,5 @@
 import useFetch from '../hooks/useFetch';
+import { AuthSessionData } from './AuthContextProvider';
 import { City } from '../models/City';
 import {
   ContextSetter,
@@ -20,12 +21,11 @@ import { InternalProgram } from '../models/InternalProgram';
 import { Location } from '../models/Location';
 import { Log } from '../models/Log';
 import { Module } from '../models/Module';
-import { NIL as NIL_UUID, v4 as uuidv4 } from 'uuid';
-import { User } from '../models/User';
-import { AuthSessionData } from './AuthContextProvider';
 import { News } from '../models/News';
-import { Testimonial } from '../models/Testimonial';
+import { NIL as NIL_UUID, v4 as uuidv4 } from 'uuid';
 import { Site } from '../models/Site';
+import { Testimonial } from '../models/Testimonial';
+import { User } from '../models/User';
 
 export interface ContextLogFilters {
   dateStart: string
@@ -87,7 +87,7 @@ export interface AppContextValue {
       value: ContextLogFilters
     },
     set: ContextSetter<Log[]>,
-    fetch: (params?:{moduleId?:string, type?:string}) => Promise<void>
+    fetch: (params?: { moduleId?: string, type?: string }) => Promise<void>
   }
   modules: {
     state: ContextState,
@@ -497,7 +497,7 @@ const AppContextProvider = ({ children, sessionData }: AppContextProps) => {
       setCities(citiesData)
     }
   }, [citiesData])
-  
+
   useEffect(() => {
     if (sitesData) {
       setSites(sitesData)

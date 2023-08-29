@@ -39,7 +39,10 @@ const EventsMenuListItem = memo(({ text, isLoading, isActive, onDelete }: Events
           color: isActive ? "white" : "#046F67"
         }}
         p="2">
-        <Text>{text}</Text>
+        <Text
+          overflow='hidden'
+          whiteSpace='nowrap'
+          textOverflow='ellipsis'>{text}</Text>
         <Spacer />
         <Box>
           {
