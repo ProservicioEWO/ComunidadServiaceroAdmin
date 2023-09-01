@@ -66,10 +66,12 @@ const getProgramInfo = (type: ProgramType) => {
 const CourseDetailView = () => {
   const { authSessionData: { accessToken } } = useAuthContext()
   const { newId, programs } = useAppContext()
+  //PROBLEMA
   const [formType, setFormType] = useState<'interno' | 'externo'>()
-  const [modalMode, setModalMode] = useState<'edit' | 'set'>('set')
+  const [modalMode, setModalMode] = useState<'edit' | 'set'>()
   const [editId, setEditId] = useState<string>()
   const [initValues, setInitValues] = useState<AnyProgram>()
+  //FIN PROBLEMA
   const [searchValue, setSearchValue] = useState("")
   const { successToast, errorToast } = useCustomToast()
   const { cityId, sectionId } = useParams<CourseParams>()
@@ -198,11 +200,11 @@ const CourseDetailView = () => {
     }
   }
 
+  //Posible error
   const handleClickItem = async (id: string) => {
-    onOpen()
     setEditId(id)
     setModalMode('edit')
-    await fetchProgram(`/programs/:id`, {
+    await fetchProgram(`/programs/${id}`, {
       jwt: accessToken!,
       param: { id }
     })
@@ -212,7 +214,8 @@ const CourseDetailView = () => {
     if (programData) {
       setInitValues(programData)
       console.log(programData)
-      setFormType(programData.type === ProgramType.internal ? 'interno' : 'externo')
+      setFormType(programData.type === ProgramType.internal ? 'interno' : 'externo'  )
+      onOpen()
     }
   }, [programData])
 
@@ -239,28 +242,32 @@ const CourseDetailView = () => {
 
   return (
     <>
-      <FormModal
-        mode={modalMode}
-        isOpen={isOpen}
-        isSubmitting={loadingInsert}
-        isLoading={programLoading}
-        onClose={onClose}
-        onConfirm={formType === 'interno' ? handleConfirmI : handleConfirmE}
-        title={formType ? `Configuración de programa (${formType})` : 'Cargando...'}>
-        {
-          formType === 'interno' ?
-            <InternalForm
-              ref={formRefI}
-              init={initValues as InternalFormValues}
-              onSubmit={handleSubmitI}
-              onError={() => console.log("hubo un error en form interno")} /> :
-            <ExternalForm
-              ref={formRefE}
-              init={initValues as ExternalFormValues}
-              onSubmit={handleSubmitE}
-              onError={() => console.log("hubo un error en form externo")} />
-        }
-      </FormModal>
+      {
+        modalMode &&
+        <FormModal
+          mode={modalMode}
+          isOpen={isOpen}
+          isSubmitting={loadingInsert}
+          isLoading={programLoading}
+          onClose={onClose}
+          onConfirm={formType === 'interno' ? handleConfirmI : handleConfirmE}
+          title={formType ? `Configuración de programa (${formType})` : 'Cargando...'}>
+          {
+            formType === 'interno' ?
+              <InternalForm
+                ref={formRefI}
+                init={initValues as InternalFormValues}
+                onSubmit={handleSubmitI}
+                onError={() => console.log("hubo un error en form interno")} /> :
+            formType === 'externo' ?
+              <ExternalForm
+                ref={formRefE}
+                init={initValues as ExternalFormValues}
+                onSubmit={handleSubmitE}
+                onError={() => console.log("hubo un error en form externo")} /> : undefined
+          }
+        </FormModal>
+      }
       <VStack align="stretch">
         {
           sectionId &&
