@@ -1,15 +1,12 @@
 import ConfigMenu from './ConfigMenu';
 import {
-  Button,
   Modal,
   Text,
   ModalBody,
   ModalCloseButton,
   ModalContent,
-  ModalFooter,
   ModalHeader,
   ModalOverlay,
-  HStack,
   Center
 } from '@chakra-ui/react';
 

@@ -2,7 +2,6 @@ import { AddIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
 import {
   Button,
   ButtonGroup,
-  Fade,
   HStack,
   Icon,
   IconButton,

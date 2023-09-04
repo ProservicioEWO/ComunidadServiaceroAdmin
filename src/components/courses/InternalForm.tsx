@@ -1,13 +1,12 @@
-import HTMLEditor from './HTMLEditor';
-import randomColor from 'randomcolor';
-import useAppContext from '../../hooks/useAppContext';
+import HTMLEditor from './HTMLEditor'
+import randomColor from 'randomcolor'
+import useAppContext from '../../hooks/useAppContext'
 import {
   Box,
   Divider,
   Flex,
   FormControl,
   FormErrorMessage,
-  FormHelperText,
   FormLabel,
   Heading,
   HStack,
@@ -21,14 +20,14 @@ import {
   Switch,
   Textarea,
   VStack
-} from '@chakra-ui/react';
-import { ChevronDownIcon } from '@chakra-ui/icons';
-import { Controller, useForm } from 'react-hook-form';
-import { getSimpleId } from '../../shared/utils';
-import { LocationParams } from '../locations/LocationDetailView';
-import { MdInsertLink } from 'react-icons/md';
-import { RefObject, useEffect, forwardRef, ForwardedRef } from 'react';
-import { useParams } from 'react-router-dom';
+} from '@chakra-ui/react'
+import { ChevronDownIcon } from '@chakra-ui/icons'
+import { Controller, useForm } from 'react-hook-form'
+import { getSimpleId } from '../../shared/utils'
+import { LocationParams } from '../locations/LocationDetailView'
+import { MdInsertLink } from 'react-icons/md'
+import { useEffect, forwardRef, ForwardedRef } from 'react'
+import { useParams } from 'react-router-dom'
 
 export interface InternalFormValues {
   simpleId: string

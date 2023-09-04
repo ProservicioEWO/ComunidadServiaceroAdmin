@@ -1,4 +1,4 @@
-import { Program } from "./Program";
+import { Program } from "./Program"
 
 export interface ExternalProgram extends Program {
   institution: string
