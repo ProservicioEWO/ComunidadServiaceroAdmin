@@ -7,6 +7,7 @@ import useFetch from '../../hooks/useFetch';
 import useUpdateData from '../../hooks/useUpdateData';
 import {
   Box,
+  filter,
   HStack,
   Icon,
   Image,
@@ -39,7 +40,7 @@ const ConfigMenu = () => {
     setSelectedEnt(selected)
   }
 
-  const handleAcept = async (value: string) => {
+  const handleAccept = async (value: string) => {
     if (selectedEnt) {
       const ok = await updateEnterprise(
         "/enterprises/:id",
@@ -51,6 +52,24 @@ const ConfigMenu = () => {
         setSelectedEnt({
           ...selectedEnt,
           entities: [...(selectedEnt.entities ?? []), value]
+        })
+      }
+    }
+  }
+
+  const handleDeleteEntity = async (id: number) => {
+    const arrayElementDrop = selectedEnt?.entities.filter((_e, i) => i !== id) ?? []
+    if (selectedEnt) {
+      const ok = await updateEnterprise(
+        "/enterprises/:id",
+        { id: String(selectedEnt.id) },
+        { entities: [...arrayElementDrop] },
+        { jwt: accessToken! }
+      )
+      if (ok) {
+        setSelectedEnt({
+          ...selectedEnt,
+          entities: [...arrayElementDrop]
         })
       }
     }
@@ -100,9 +119,11 @@ const ConfigMenu = () => {
             !selectedEnt ?
               <Text>Selecciona una empresa para empezar a configurar</Text> :
               <EntityDynamicList
+                isLoading={updateLoading}
                 data={selectedEnt.entities ?? []}
                 emptyMessage="Esta empresa no tiene entidades registradas"
-                onAcept={handleAcept} />
+                onAccept={handleAccept}
+                onDelete={handleDeleteEntity} />
           }
         </Box>
       </HStack >

@@ -1,5 +1,6 @@
-import { AddIcon, CheckIcon, CloseIcon } from '@chakra-ui/icons';
+import { AddIcon, CheckIcon, CloseIcon, DeleteIcon } from '@chakra-ui/icons';
 import {
+  Box,
   Button,
   ButtonGroup,
   HStack,
@@ -16,25 +17,30 @@ import { useState } from 'react';
 
 export interface EntityDynamicListProps {
   data: string[]
+  isLoading: boolean
   emptyMessage: string
-  onAcept: (value: string) => void
+  onAccept: (value: string) => Promise<void>
+  onDelete: (id: number) => Promise<void>
 }
 
-const EntityDynamicList = ({ data, emptyMessage, onAcept }: EntityDynamicListProps) => {
+const EntityDynamicList = ({ data, emptyMessage, isLoading, onAccept, onDelete }: EntityDynamicListProps) => {
   const [isAdd, setIsAdd] = useBoolean(false)
   const [newValue, setNewValue] = useState<string>("")
+  const [currentHovered, setCurrentHovered] = useState<number>()
 
   const handleAdd = () => {
     setIsAdd.on()
   }
 
-  const handleAcept = () => {
-    setIsAdd.off()
-    onAcept(newValue)
+  const handleAccept = async () => {
+    await onAccept(newValue)
+    //setIsAdd.off()
+    setNewValue("")
   }
 
   const handleCancel = () => {
     setIsAdd.off()
+    setNewValue("")
   }
 
   return (
@@ -45,8 +51,27 @@ const EntityDynamicList = ({ data, emptyMessage, onAcept }: EntityDynamicListPro
             {
               data.map(
                 (e, i) => (
-                  <HStack key={i} p={2} align="center" borderBottom={i < data.length - 1 ? "1px solid #dedede" : "none"} >
+                  <HStack
+                    cursor='default'
+                    key={i}
+                    p={2} align="center"
+                    borderBottom={i < data.length - 1 ? "1px solid #dedede" : "none"}
+                    onMouseEnter={() => setCurrentHovered(i)}
+                    onMouseLeave={() => setCurrentHovered(undefined)}>
                     <Text>{e}</Text>
+                    <Spacer />
+                    {
+                      <Box overflow='hidden'>
+                        <SlideFade in={currentHovered !== undefined && currentHovered === i} offsetX={20} offsetY={0}>
+                          <IconButton
+                            variant='unstyled'
+                            color='red.500'
+                            icon={<Icon as={DeleteIcon} />}
+                            aria-label={'delete item'}
+                            onClick={async () => await onDelete(i)} />
+                        </SlideFade>
+                      </Box>
+                    }
                   </HStack>
                 )
               )
@@ -56,10 +81,24 @@ const EntityDynamicList = ({ data, emptyMessage, onAcept }: EntityDynamicListPro
       }
       <SlideFade in={isAdd}>
         <HStack>
-          <Input value={newValue} onChange={({ target: { value } }) => setNewValue(value)} placeholder='nombre entidad' />
+          <Input
+            isDisabled={isLoading}
+            value={newValue}            
+            onChange={({ target: { value } }) => setNewValue(value)}
+            placeholder='nombre entidad' 
+            />
           <ButtonGroup size="sm" isAttached>
-            <IconButton icon={<Icon as={CloseIcon} />} colorScheme="red" onClick={handleCancel} aria-label='cancel' />
-            <IconButton icon={<Icon as={CheckIcon} />} colorScheme="green" onClick={handleAcept} aria-label='acept' />
+            <IconButton
+              isDisabled={isLoading}
+              icon={<Icon as={CloseIcon} />}
+              colorScheme="red"
+              onClick={handleCancel}
+              aria-label='cancel' />
+            <IconButton
+              isDisabled={newValue === "" }
+              icon={<Icon as={CheckIcon} />}
+              colorScheme="green"
+              onClick={handleAccept} aria-label='acept' />
           </ButtonGroup>
         </HStack>
       </SlideFade>
