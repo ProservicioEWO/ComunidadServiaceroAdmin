@@ -1,36 +1,43 @@
 import DataList from '../DataList';
 import DataListItem from '../DataListItem';
 import useAppContext from '../../hooks/useAppContext';
+import useAuthContext from '../../hooks/useAuthContext';
 import useCustomToast from '../../hooks/useCustomToast';
 import useDeleteData from '../../hooks/useDelete';
-import { HStack, Image, Spinner, Text } from '@chakra-ui/react';
+import {
+  HStack,
+  Image,
+  Text,
+  VStack
+} from '@chakra-ui/react';
 import { InputChangeEvent } from '../../shared/typeAlias';
 import { NavLink, useNavigate, useParams } from 'react-router-dom';
 import { useCallback, useEffect, useState } from 'react';
 import { User } from '../../models/User';
 import { UserDetailParams } from './UserDetailView';
-import useAuthContext from '../../hooks/useAuthContext';
 
 const filterCallback = (search: string) => {
-  const regex = new RegExp(`^${search}[\\s\\w]*`)
+  const regex = new RegExp(`^${search.toUpperCase()}[\\s\\w]*`)
   return (data: User) => (
-    search === "" || regex.test(data.name) || regex.test(data.lastname)
+    regex.test(data.lastname.toUpperCase()) ||
+    regex.test(data._lastname.toUpperCase()) ||
+    regex.test(`${data.name} ${data.lastname} ${data._lastname}`.toUpperCase())
   )
 }
 
 const UsersListView = () => {
   const navigate = useNavigate()
-  const { isBusy, authSessionData: { accessToken } } = useAuthContext()
+  const { authSessionData: { accessToken } } = useAuthContext()
   const { users } = useAppContext()
   const [search, setSearch] = useState("")
   const { userId } = useParams<UserDetailParams>()
   const { successToast, errorToast } = useCustomToast()
   const { loading: deleteLoading, error: deleteError, deleteData } = useDeleteData()
-  
+
   const handleSearch = useCallback(({ target: { value } }: InputChangeEvent) => setSearch(value), [])
-  
+
   const handleFilter = useCallback(filterCallback(search), [search])
-  
+
   const handleDeleteUser = async (itemId: string | number) => {
     console.log(itemId)
     const ok = await deleteData("/users", itemId, {
@@ -59,12 +66,10 @@ const UsersListView = () => {
     }
   }, [deleteError, users.state.error])
 
-  // if (users.state.loading || isBusy) {
-  //   return <Spinner/>
-  // }
-
   return (
     <DataList<User>
+      sortable
+      sortAttribute="name"
       list={users.get}
       isLoading={users.state.loading}
       error={!!users.state.error}
@@ -72,7 +77,7 @@ const UsersListView = () => {
       onFilter={handleFilter}
       onSearch={handleSearch}>
       {
-        ({ id, name, lastname, enterprise: { logo } }) => (
+        ({ id, name, lastname, _lastname, username, enterprise: { logo } }) => (
           <DataListItem
             key={id}
             loading={deleteLoading}
@@ -83,15 +88,19 @@ const UsersListView = () => {
                   ({ isActive }) => (
                     <HStack>
                       <Image src={logo} boxSize="8" />
-                      <Text
-                        style={
-                          isActive ? {
-                            fontWeight: 'bold',
-                            textDecoration: 'underline'
-                          } : undefined
-                        }>
-                        {`${name} ${lastname}`}
-                      </Text>
+                      <VStack align={"start"} spacing={0}>
+                        <Text
+                          style={
+                            isActive ? {
+                              fontWeight: 'bold',
+                              textDecoration: 'underline',
+                            } : undefined
+                          }>
+                          {`${name} ${lastname} ${_lastname}`}
+                        </Text>
+                        <Text fontSize={'smaller'} color="gray.500"> {`${username}`}</Text>
+                      </VStack>
+
                     </HStack>
                   )
                 }
