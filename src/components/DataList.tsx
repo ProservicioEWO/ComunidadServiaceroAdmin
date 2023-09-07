@@ -139,15 +139,28 @@ const DataList = <T,>({
           }
         </List>
         <ButtonGroup isAttached variant="outline" style={{ alignSelf: "center" }}>
-          <IconButton icon={<CSPreviousIcon />} aria-label='previous' onClick={handlePageChange.previous} isDisabled={page === 1} />
+          <IconButton
+            icon={<CSPreviousIcon />}
+            aria-label='previous'
+            onClick={handlePageChange.previous} isDisabled={page === 1} />
           {
-            Array(Math.ceil(10))
+            Array(10)
               .fill('')
               .map((_e, i) => (
-                <Button key={i} isDisabled={i + 1 + (page - 5) > Math.ceil(filteredData.length / pageSize) || i + 1 + (page - 5) <= 0} bg={i + 1 + (page - 5) === page ? "gray.200" : "white"} onClick={handlePageChange.set(i + 1 + (page - 5))}> {(i + 1 + (page - 5)) > 0 && (i + 1 + (page - 5)) <= Math.ceil((filteredData.length / pageSize)) ? i + 1 + (page - 5) : null}</Button>
+                !(i + page - 4 > Math.ceil(filteredData.length / pageSize) || i + page - 4 <= 0) &&
+                <Button
+                  key={i}
+                  bg={i + page - 4 === page ? "gray.200" : "white"}
+                  onClick={handlePageChange.set(i + 1 + (page - 5))}>
+                  {i + page - 4 > 0 && (i + page - 4) <= Math.ceil((filteredData.length / pageSize)) ? i + page - 4 : null}
+                </Button>
               ))
           }
-          <IconButton icon={<CSNextIcon />} aria-label='next' onClick={handlePageChange.next} isDisabled={page === Math.ceil(filteredData.length / pageSize)} />
+          <IconButton
+            icon={<CSNextIcon />}
+            aria-label='next'
+            onClick={handlePageChange.next}
+            isDisabled={page === Math.ceil(filteredData.length / pageSize)} />
         </ButtonGroup>
       </VStack >
   )
