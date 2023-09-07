@@ -4,6 +4,7 @@ import {
   Card,
   CardBody,
   HStack,
+  Spacer,
   Tab,
   TabList,
   TabPanel,
@@ -12,21 +13,26 @@ import {
   Text
 } from '@chakra-ui/react';
 import { Outlet } from 'react-router-dom';
+import useAppContext from '../hooks/useAppContext';
 
 const Users = () => {
   const tabsSeed = ["Todos", "+ Agregar"]
-  
+  const {users} = useAppContext() 
   return (
     <Card w="full">
       <CardBody>
         <Tabs isLazy variant="line" colorScheme="red">
-          <TabList>
-            {tabsSeed.map((text, i) =>
-              <Tab key={i}>
-                <Text>{text}</Text>
-              </Tab>
-            )}
-          </TabList>
+          <HStack >
+            <TabList w="full">
+              {tabsSeed.map((text, i) =>
+                <Tab key={i}>
+                  <Text>{text}</Text>
+                </Tab>
+              )}
+            </TabList>
+            <Spacer/>
+            <Text whiteSpace="nowrap">Juntos somos <b>{users.get?.length ?? 0}</b> usuarios</Text>
+          </HStack>
           <TabPanels>
             <TabPanel>
               <HStack align='start' spacing='6'>

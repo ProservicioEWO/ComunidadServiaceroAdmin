@@ -11,6 +11,7 @@ import {
 import { InputChangeEvent } from '../shared/typeAlias'
 import { clamp } from '../shared/utils'
 import { WarningTwoIcon } from '@chakra-ui/icons'
+import useAppContext from '../hooks/useAppContext'
 
 export type DataListItem = typeof DataListItem
 
@@ -32,14 +33,16 @@ export interface DataListProps<T> extends Omit<ListProps, 'children'> {
 
 const DataList = <T,>({ list, isLoading, error, searchValue, options, onFilter, onSearch, children, ...props }: DataListProps<T>) => {
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(10)
+  const [pageSize, setPageSize] = useState(10)  
   const filteredData = useMemo(() => list?.filter(onFilter ?? ALWAYS_TRUE) ?? [], [list, onFilter])
+  const {users} = useAppContext()
   const handlePageChange = {
     previous: () => page > 1 ? setPage(page - 1) : setPage(1),
     next: () => page < Math.ceil(filteredData.length / pageSize) ? setPage(page + 1) : setPage(Math.ceil(filteredData.length / pageSize)),
     set: (index: number) => () => setPage(index)
   }
 
+  console.log(Math.ceil(filteredData.length / pageSize))
   if (error) {
     return (
       <HStack fontSize='2xl'>
@@ -81,19 +84,19 @@ const DataList = <T,>({ list, isLoading, error, searchValue, options, onFilter, 
               </Flex>)
           }
         </List>
-        <ButtonGroup isAttached variant="outline">
+        <ButtonGroup isAttached variant="outline" style={{alignSelf: "center"}}>
           <IconButton icon={<CSPreviousIcon />} aria-label='previous' onClick={handlePageChange.previous} isDisabled={page === 1} />
           {
-            Array(Math.ceil(filteredData.length / pageSize))
+            Array(Math.ceil(10))
               .fill('')
-              .map((_e, i) => (
-                <Button key={i} bg={i + 1 === page ? "gray.200" : "white"} onClick={handlePageChange.set(i + 1)}>{i + 1}</Button>
+              .map((_e, i) => ( 
+                  <Button key={i} isDisabled={i +1 +(page -5) > Math.ceil(filteredData.length / pageSize) || i +1 +(page -5) <=0} bg={i +1 +(page-5) === page ? "gray.200" : "white"} onClick={handlePageChange.set(i +1 +(page-5))}> {(i +1 +(page-5)) > 0  && (i +1 +(page-5)) <= Math.ceil((filteredData.length / pageSize)) ? i +1 +(page-5) : null }</Button>
               ))
           }
           <IconButton icon={<CSNextIcon />} aria-label='next' onClick={handlePageChange.next} isDisabled={page === Math.ceil(filteredData.length / pageSize)} />
         </ButtonGroup>
       </VStack >
-  )
+      )
 }
 
 export default DataList
