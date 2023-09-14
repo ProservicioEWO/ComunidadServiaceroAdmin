@@ -41,7 +41,6 @@ const DropzoneComponent = ({ placeholder, icon, accept, maxFiles, multiple = tru
 
   const handleDragEnter = (e: any) => {
     e.preventDefault()
-    console.log(e)
     setDraggedIn(true)
   }
 

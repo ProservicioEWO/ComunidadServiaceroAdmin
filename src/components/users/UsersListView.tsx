@@ -39,7 +39,6 @@ const UsersListView = () => {
   const handleFilter = useCallback(filterCallback(search), [search])
 
   const handleDeleteUser = async (itemId: string | number) => {
-    console.log(itemId)
     const ok = await deleteData("/users", itemId, {
       jwt: accessToken!
     })

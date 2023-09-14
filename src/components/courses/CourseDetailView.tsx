@@ -213,7 +213,6 @@ const CourseDetailView = () => {
   useEffect(() => {
     if (programData) {
       setInitValues(programData)
-      console.log(programData)
       setFormType(programData.type === ProgramType.internal ? 'interno' : 'externo'  )
       onOpen()
     }

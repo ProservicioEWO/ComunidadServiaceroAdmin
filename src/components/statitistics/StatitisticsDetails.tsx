@@ -55,7 +55,6 @@ const StatitisticsDetails = () => {
         events: {
           dataPointSelection(_e, chart, options) {
             const category = chart.w.config.xaxis.categories[options.dataPointIndex]
-            console.log(">_", category)
             const user = users.get?.find(({ username }) => username === category)
             if (user) {
               navigate(user.id)
@@ -128,9 +127,6 @@ const StatitisticsDetails = () => {
 
     const groupedLogList = logList.reduce<Grouped<Log>>(
       (result, log) => {
-
-        console.log(log)
-
         if (!result[log.user.username]) {
           result[log.user.username] = []
         }
@@ -138,8 +134,6 @@ const StatitisticsDetails = () => {
         return result
       }, {}
     )
-
-    console.log(groupedLogList)
 
     setData(prevData => ({
       ...prevData,

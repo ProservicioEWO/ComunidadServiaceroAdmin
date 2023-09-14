@@ -55,7 +55,6 @@ const NewForm = forwardRef(({ data, imageUrl, onUpdate }: NewFormProps, ref: For
     })
 
   const handleUpdate = (values: NewsEditFormValues) => {
-    console.log("FORM", values);
     onUpdate({
       imageList,
       values

@@ -56,7 +56,6 @@ const ImportUsersView = () => {
         await users.fetch()
         successToast("Se cargó la lista de usuarios con éxito.")
       }
-      console.log(excelJSON)
     } catch (error) {
       const err = error as Error
       errorToast(err.message)
