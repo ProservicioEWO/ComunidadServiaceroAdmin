@@ -17,19 +17,16 @@ import {
   Spinner,
   Switch,
   Text,
-  Textarea,
-  VStack
+  Textarea, VStack
 } from '@chakra-ui/react'
 import randomColor from 'randomcolor'
-import { ForwardedRef, forwardRef, useEffect, useMemo } from 'react'
+import { ForwardedRef, forwardRef, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { MdInsertLink } from 'react-icons/md'
-import { useParams } from 'react-router-dom'
 import useAppContext from '../../hooks/useAppContext'
 import { Frequency } from '../../shared/typeAlias'
 import { getSimpleId } from '../../shared/utils'
 import DayOfWeekPicker from '../DayOfWeekPicker'
-import { LocationParams } from '../locations/LocationDetailView'
 import HTMLEditor from './HTMLEditor'
 
 export interface InternalFormValues {
@@ -62,6 +59,7 @@ export interface InternalFormProps {
 
 const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps, ref: ForwardedRef<HTMLFormElement>) => {
   const { locations } = useAppContext()
+  const [disableFreq, setDisableFreq] = useState(false)
   const {
     control,
     formState: { errors },
@@ -251,11 +249,20 @@ const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps,
                 <DayOfWeekPicker
                   values={value}
                   isInvalid={!!errors.days}
-                  OnChange={onChange} />
+                  OnChange={(values) => {
+                    setDisableFreq(values.length >= 7)
+                    onChange(values)
+                  }} />
               )} />
           </VStack>
           <FormControl w="fit-content" variant="floating" isInvalid={!!errors.frequency}>
-            <Select {...register("frequency")} size="lg" placeholder='--'>
+            <Select
+              size="lg"
+              placeholder='--'
+              isDisabled={disableFreq}
+              value={disableFreq ? 'daily' : undefined}
+              {...register("frequency")} >
+              {disableFreq && <option value='daily'>diario</option>}
               <option value='weekly'>semanal</option>
               <option value='monthly'>mensual</option>
             </Select>
