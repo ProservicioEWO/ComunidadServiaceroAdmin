@@ -65,7 +65,8 @@ const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps,
     formState: { errors },
     register,
     handleSubmit,
-    setValue
+    setValue,
+    resetField
   } = useForm<InternalFormValues>({
     defaultValues: useMemo(() => init, [init])
   })
@@ -251,6 +252,11 @@ const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps,
                   isInvalid={!!errors.days}
                   OnChange={(values) => {
                     setDisableFreq(values.length >= 7)
+                    if (values.length >= 7) {
+                      setValue("frequency", "daily")
+                    } else {
+                      resetField("frequency")
+                    }
                     onChange(values)
                   }} />
               )} />
@@ -260,8 +266,7 @@ const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps,
               size="lg"
               placeholder='--'
               isDisabled={disableFreq}
-              value={disableFreq ? 'daily' : undefined}
-              {...register("frequency")} >
+              {...register("frequency", {required: true})} >
               {disableFreq && <option value='daily'>diario</option>}
               <option value='weekly'>semanal</option>
               <option value='monthly'>mensual</option>
