@@ -265,8 +265,9 @@ const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps,
             <Select
               size="lg"
               placeholder='--'
+              value={disableFreq ? "daily" : undefined}
               isDisabled={disableFreq}
-              {...register("frequency", {required: true})} >
+              {...register("frequency", { required: true })} >
               {disableFreq && <option value='daily'>diario</option>}
               <option value='weekly'>semanal</option>
               <option value='monthly'>mensual</option>
