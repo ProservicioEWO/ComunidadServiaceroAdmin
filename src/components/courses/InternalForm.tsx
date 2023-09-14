@@ -1,6 +1,4 @@
-import HTMLEditor from './HTMLEditor'
-import randomColor from 'randomcolor'
-import useAppContext from '../../hooks/useAppContext'
+import { ChevronDownIcon } from '@chakra-ui/icons'
 import {
   Box,
   Divider,
@@ -18,16 +16,21 @@ import {
   Spacer,
   Spinner,
   Switch,
+  Text,
   Textarea,
   VStack
 } from '@chakra-ui/react'
-import { ChevronDownIcon } from '@chakra-ui/icons'
+import randomColor from 'randomcolor'
+import { ForwardedRef, forwardRef, useEffect, useMemo } from 'react'
 import { Controller, useForm } from 'react-hook-form'
-import { getSimpleId } from '../../shared/utils'
-import { LocationParams } from '../locations/LocationDetailView'
 import { MdInsertLink } from 'react-icons/md'
-import { useEffect, forwardRef, ForwardedRef } from 'react'
 import { useParams } from 'react-router-dom'
+import useAppContext from '../../hooks/useAppContext'
+import { Frequency } from '../../shared/typeAlias'
+import { getSimpleId } from '../../shared/utils'
+import DayOfWeekPicker from '../DayOfWeekPicker'
+import { LocationParams } from '../locations/LocationDetailView'
+import HTMLEditor from './HTMLEditor'
 
 export interface InternalFormValues {
   simpleId: string
@@ -47,6 +50,8 @@ export interface InternalFormValues {
   plan: string
   req: string
   color: string
+  frequency: Frequency
+  days: number[]
 }
 
 export interface InternalFormProps {
@@ -56,22 +61,23 @@ export interface InternalFormProps {
 }
 
 const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps, ref: ForwardedRef<HTMLFormElement>) => {
-  const { cityId } = useParams<LocationParams>()
   const { locations } = useAppContext()
-  const { control, formState: { errors }, register, handleSubmit, setValue, reset } = useForm<InternalFormValues>()
+  const {
+    control,
+    formState: { errors },
+    register,
+    handleSubmit,
+    setValue
+  } = useForm<InternalFormValues>({
+    defaultValues: useMemo(() => init, [init])
+  })
 
   useEffect(() => {
-    if (init) {
-      reset(init)
-    } else {
+    if (!init) {
       setValue("simpleId", 'PI-' + getSimpleId())
       setValue("color", randomColor())
     }
   }, [])
-
-  useEffect(() => {
-    locations.fetch()
-  }, [cityId])
 
   return (
     <form ref={ref} onSubmit={handleSubmit(onSubmit, onError)}>
@@ -213,7 +219,11 @@ const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps,
               size='lg'
               placeholder='--'
               isDisabled={locations.state.loading}
-              icon={locations.state.loading ? <Spinner /> : <ChevronDownIcon />}
+              icon={
+                locations.state.loading ?
+                  <Spinner /> :
+                  <ChevronDownIcon />
+              }
               {...register("locationId", { required: true })}>
               {
                 locations.list?.map(({ id, name }, i) => (
@@ -230,6 +240,31 @@ const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps,
             <FormErrorMessage>Indica un horario</FormErrorMessage>
           </FormControl>
         </HStack>
+        <HStack align="center" spacing={4}>
+          <VStack align="start">
+            <Text fontSize={14} fontWeight="semibold" ps={5} mb={1}>Dias especificos</Text>
+            <Controller
+              control={control}
+              name='days'
+              rules={{ validate: days => !!days.length }}
+              render={({ field: { value, onChange } }) => (
+                <DayOfWeekPicker
+                  values={value}
+                  isInvalid={!!errors.days}
+                  OnChange={onChange} />
+              )} />
+          </VStack>
+          <FormControl w="fit-content" variant="floating" isInvalid={!!errors.frequency}>
+            <Select {...register("frequency")} size="lg" placeholder='--'>
+              <option value='daily'>diario</option>
+              <option value='weekly'>semanal</option>
+              <option value='monthly'>mensual</option>
+            </Select>
+            <FormLabel>Frecuencia</FormLabel>
+            <FormErrorMessage>Selecciona una frecuencia</FormErrorMessage>
+          </FormControl>
+        </HStack>
+        <Divider />
         <FormControl variant='floating' isInvalid={!!errors.duration}>
           <Input size='lg' placeholder=' ' {...register("duration", { required: true })} />
           <FormLabel>Duración</FormLabel>

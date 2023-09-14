@@ -1,3 +1,4 @@
+import { Frequency } from "../shared/typeAlias"
 import { Program } from "./Program"
 
 export interface InternalProgram extends Program {
@@ -10,4 +11,6 @@ export interface InternalProgram extends Program {
   locationId: string
   auto: boolean
   color: string
+  frequency: Frequency
+  days: number[]
 }

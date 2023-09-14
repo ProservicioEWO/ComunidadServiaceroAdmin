@@ -59,6 +59,14 @@ const App = () => {
 
   return (
     <Routes>
+      <Route
+        path='login'
+        element={
+          <Redirect>
+            <Login />
+          </Redirect>
+        } />
+      <Route path='/error' element={<NotFound />} />
       <Route path="/" element={
         <Authorize>
           <Dashboard />
@@ -93,14 +101,6 @@ const App = () => {
         </Route>
         <Route path='*' element={<NotFound />} />
       </Route>
-      <Route
-        path='login'
-        element={
-          <Redirect>
-            <Login />
-          </Redirect>
-        } />
-      <Route path='/error' element={<NotFound />} />
       <Route path='*' element={<NotFound />} />
     </Routes>
   )

@@ -13,7 +13,8 @@ import {
   ModalHeader,
   ModalOverlay
 } from '@chakra-ui/react';
-import { ReactNode } from 'react';
+import { ReactNode, useEffect } from 'react';
+import useAppContext from '../../hooks/useAppContext';
 
 export interface FormModalProps {
   title: string
@@ -27,9 +28,16 @@ export interface FormModalProps {
 }
 
 const FormModal = ({ title, isOpen, isSubmitting, isLoading, mode, children, onClose, onConfirm }: FormModalProps) => {
+  const { locations } = useAppContext()
+
+  //PARA CAMBIAR LUEGO
+  useEffect(() => {
+    locations.fetch()
+  }, [])
+
   return (
     <Modal
-      size={mode === 'edit' ? (isLoading ? 'md' : 'full') : 'full'}
+      size={mode === 'edit' ? (isLoading || locations.state.loading ? 'md' : 'full') : 'full'}
       isOpen={isOpen}
       onClose={onClose}
       scrollBehavior="inside">
@@ -44,7 +52,7 @@ const FormModal = ({ title, isOpen, isSubmitting, isLoading, mode, children, onC
           {
             mode === 'edit' ?
               (
-                isLoading ?
+                isLoading || locations.state.loading ?
                   <Box w="full">
                     <Flex boxSize="full" align="center" justify="center">
                       <Lottie animationData={SettingLoadingAnimation} />
@@ -55,7 +63,7 @@ const FormModal = ({ title, isOpen, isSubmitting, isLoading, mode, children, onC
           }
         </ModalBody>
         {
-          !isLoading &&
+          !isLoading && !locations.state.loading &&
           <ModalFooter>
             <Button
               isDisabled={isSubmitting}

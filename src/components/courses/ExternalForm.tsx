@@ -14,7 +14,7 @@ import {
   VStack
 } from '@chakra-ui/react';
 import { MdInsertLink } from 'react-icons/md';
-import { ForwardedRef, forwardRef, useEffect } from 'react';
+import { ForwardedRef, forwardRef, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { getSimpleId } from '../../shared/utils';
 
@@ -41,12 +41,17 @@ export interface ExternalFormProps {
 }
 
 const ExternalForm = forwardRef(({ init, onSubmit, onError }: ExternalFormProps, ref: ForwardedRef<HTMLFormElement>) => {
-  const { formState: { errors }, register, handleSubmit, setValue, reset } = useForm<ExternalFormValues>()
+  const {
+    formState: { errors },
+    register,
+    handleSubmit,
+    setValue    
+  } = useForm<ExternalFormValues>({
+    defaultValues: useMemo(() => init, [init])
+  })
 
   useEffect(() => {
-    if(init){
-      reset(init)
-    }else{
+    if (!init) {
       setValue("simpleId", 'PE-' + getSimpleId())
     }
   }, [])
