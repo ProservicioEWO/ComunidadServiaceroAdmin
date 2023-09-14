@@ -256,7 +256,6 @@ const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps,
           </VStack>
           <FormControl w="fit-content" variant="floating" isInvalid={!!errors.frequency}>
             <Select {...register("frequency")} size="lg" placeholder='--'>
-              <option value='daily'>diario</option>
               <option value='weekly'>semanal</option>
               <option value='monthly'>mensual</option>
             </Select>
