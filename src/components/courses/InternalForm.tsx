@@ -24,7 +24,7 @@ import { ForwardedRef, forwardRef, useEffect, useMemo, useState } from 'react'
 import { Controller, useForm } from 'react-hook-form'
 import { MdInsertLink } from 'react-icons/md'
 import useAppContext from '../../hooks/useAppContext'
-import { Frequency } from '../../shared/typeAlias'
+import { Frequency } from '../../shared/Frecuency'
 import { getSimpleId } from '../../shared/utils'
 import DayOfWeekPicker from '../DayOfWeekPicker'
 import HTMLEditor from './HTMLEditor'
@@ -253,7 +253,7 @@ const InternalForm = forwardRef(({ init, onSubmit, onError }: InternalFormProps,
                   OnChange={(values) => {
                     setDisableFreq(values.length >= 7)
                     if (values.length >= 7) {
-                      setValue("frequency", "daily")
+                      setValue("frequency", Frequency.D)
                     } else {
                       resetField("frequency")
                     }

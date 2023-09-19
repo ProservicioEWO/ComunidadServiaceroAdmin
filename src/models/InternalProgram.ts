@@ -1,4 +1,5 @@
-import { Frequency } from "../shared/typeAlias"
+
+import { Frequency } from "../shared/Frecuency"
 import { Program } from "./Program"
 
 export interface InternalProgram extends Program {

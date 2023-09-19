@@ -1,13 +1,23 @@
 import dayGridPlugin from '@fullcalendar/daygrid';
 import FullCalendar from '@fullcalendar/react';
+import rrulePlugin from '@fullcalendar/rrule';
+import { Frequency } from '../../shared/Frecuency';
 import { Spinner, Text } from '@chakra-ui/react';
-
 import 'primeicons/primeicons.css';
+
+
+export interface RRuleOptions{
+  byweekday: number[] | undefined
+  freq : Frequency
+  dtstart: Date
+  until: Date
+}
 
 export interface ProgramEvent {
   title: string
-  start: Date
-  end: Date
+  start?: Date
+  end?: Date
+  rrule?: RRuleOptions
   color: string
 }
 
@@ -18,14 +28,14 @@ export interface ProgramCalendarProps {
 
 const ProgramCalendar = ({ programList, isLoading }: ProgramCalendarProps) => {
   return (
-      <div style={{
-        backgroundColor: 'white',
-        padding: '2em',
-        width: "100%",
-        position: 'relative',
-        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1),0 1px 2px 0 rgba(0, 0, 0, 0.06)',
-        borderRadius: '0.375em'
-      }}>
+    <div style={{
+      backgroundColor: 'white',
+      padding: '2em',
+      width: "100%",
+      position: 'relative',
+      boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1),0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+      borderRadius: '0.375em'
+    }}>
       <div style={{
         display: isLoading ? 'flex' : 'none',
         position: 'absolute',
@@ -53,8 +63,9 @@ const ProgramCalendar = ({ programList, isLoading }: ProgramCalendarProps) => {
         buttonText={{
           today: 'Hoy',
         }}
-        plugins={[dayGridPlugin]}
+        plugins={[dayGridPlugin, rrulePlugin]}
         events={programList}
+        displayEventTime={false}
       />
     </div>
   )

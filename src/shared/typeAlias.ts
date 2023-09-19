@@ -12,4 +12,3 @@ export type FilterPredicate<T> = (value: T, index: number, array: T[]) => unknow
 export type ContextState = { loading: boolean, error: string | null }
 export type ContextSetter<T> = Dispatch<SetStateAction<T>>
 export type ApexChartData = { options: ApexOptions, series: ApexAxisChartSeries | ApexNonAxisChartSeries }
-export type Frequency = 'weekly' | 'monthly' | 'daily'
