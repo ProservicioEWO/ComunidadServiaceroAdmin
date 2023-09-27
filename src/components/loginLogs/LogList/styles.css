@@ -1,0 +1,3 @@
+.p-dropdown-panel, .p-column-filter-overlay {
+  z-index: 9999 !important;
+}

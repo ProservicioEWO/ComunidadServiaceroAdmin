@@ -18,9 +18,19 @@ import {
 } from '@chakra-ui/react';
 import { useCallback, useEffect } from 'react';
 import EnterprisesConfigView from './enterprises-config/EnterprisesConfigView';
+import LogsView from './loginLogs/LogsView';
 
 const SignupUser = () => {
-  const { isOpen, onOpen, onClose } = useDisclosure()
+  const {
+    isOpen,
+    onOpen,
+    onClose
+  } = useDisclosure()
+  const {
+    isOpen: isOpenL,
+    onOpen: onOpenL,
+    onClose: onCloseL
+  } = useDisclosure()
   const { signOut } = useAuthContext()
   const { userInfo } = useAppContext()
   const { closeAll } = useCustomToast()
@@ -62,13 +72,14 @@ const SignupUser = () => {
               <MenuItem onClick={onOpen}>Empresas</MenuItem>
             </MenuGroup>
             <MenuDivider />
-            <MenuItem>Logs</MenuItem>
+            <MenuItem onClick={onOpenL}>Logs</MenuItem>
             <MenuDivider />
             <MenuItem onClick={handleSignOut}>Cerrar Sesión</MenuItem>
           </MenuList>
         </Menu>
       </HStack>
       <EnterprisesConfigView isOpen={isOpen} onClose={onClose} />
+      <LogsView isOpen={isOpenL} onClose={onCloseL} />
     </>
   )
 }
