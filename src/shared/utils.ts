@@ -60,3 +60,11 @@ export function tiempo(date: string | Date) {
   newDate.setDate(newDate.getDate() + 1)
   return newDate
 }
+
+export function getUNIX() {
+  return new Date().getTime() / 1000
+}
+
+export function handleModalClick(){
+  location.href = "/login"
+}
