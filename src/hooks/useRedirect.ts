@@ -16,7 +16,6 @@ const useRedirect = ({ accessToken }: UseRedirectHookOptions) => {
 
     return setInterval(() => {
       if (expire) {
-        console.log(expire)
         setStatus(
           expire <= getUNIX() ?
             SessionStatus.INVALID_SESSION :

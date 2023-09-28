@@ -8,14 +8,18 @@ import { SessionStatus } from '../shared/SessionStatus';
 
 const Dashboard = () => {
   const {
-    authSessionData
+    authSessionData,
+    signOut
   } = useAuthContext()
   const { status } = useRedirect({ accessToken: authSessionData.accessToken! })
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const handleConfirm = async () => {
+    signOut()
+  }
 
   useEffect(() => {
-    if(status === SessionStatus.INVALID_SESSION){
+    if (status === SessionStatus.INVALID_SESSION) {
       setIsModalOpen(true)
     }
   }, [status])
@@ -23,7 +27,7 @@ const Dashboard = () => {
   return (
     <AppContextProvider sessionData={authSessionData}>
       <MainLayout />
-      {isModalOpen && <MessageStatusInvalid/>}
+      {isModalOpen && <MessageStatusInvalid OnConfirm={handleConfirm} />}
     </AppContextProvider>
   )
 }

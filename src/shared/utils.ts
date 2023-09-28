@@ -64,7 +64,3 @@ export function tiempo(date: string | Date) {
 export function getUNIX() {
   return new Date().getTime() / 1000
 }
-
-export function handleModalClick(){
-  location.href = "/login"
-}
