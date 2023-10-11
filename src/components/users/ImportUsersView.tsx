@@ -14,6 +14,7 @@ import {
 import { SiMicrosoftexcel } from 'react-icons/si';
 import { useEffect, useState } from 'react';
 
+
 function readXLSX(file: File): Promise<any[]> {
   return new Promise((resolve, reject) => {
     const lector = new FileReader();
