@@ -1,13 +1,18 @@
+import * as XLSX from 'xlsx';
 import DropzoneComponent from '../locations/DropzoneComponent';
-import { SiCucumber, SiMicrosoftexcel } from 'react-icons/si';
-import { Button, Icon, SlideFade, VStack } from '@chakra-ui/react';
-import { useEffect, useState } from 'react';
-import useCustomToast from '../../hooks/useCustomToast';
-import * as XLSX from 'xlsx'
-import { AiOutlineCloudUpload } from 'react-icons/ai';
 import useAppContext from '../../hooks/useAppContext';
-import useInsertData from '../../hooks/useInsertData';
 import useAuthContext from '../../hooks/useAuthContext';
+import useCustomToast from '../../hooks/useCustomToast';
+import useInsertData from '../../hooks/useInsertData';
+import { AiOutlineCloudUpload } from 'react-icons/ai';
+import {
+  Button,
+  Icon,
+  SlideFade,
+  VStack
+} from '@chakra-ui/react';
+import { SiMicrosoftexcel } from 'react-icons/si';
+import { useEffect, useState } from 'react';
 
 function readXLSX(file: File): Promise<any[]> {
   return new Promise((resolve, reject) => {
