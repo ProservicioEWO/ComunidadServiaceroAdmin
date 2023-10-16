@@ -63,7 +63,7 @@ const FormModal = ({ title, isOpen, isSubmitting, isLoading, mode, children, onC
           }
         </ModalBody>
         {
-          !isLoading && !locations.state.loading &&
+          (mode === 'edit' ? !isLoading && !locations.state.loading : true) &&
           <ModalFooter>
             <Button
               isDisabled={isSubmitting}
