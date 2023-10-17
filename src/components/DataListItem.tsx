@@ -53,7 +53,11 @@ const DataListItem = (({ children, loading, options, onDelete, ...props }: DataL
       <SlideFade in={showButton} offsetX="20px" offsetY="0">
         <IconButton aria-label='Delete user'
           variant="unstyled"
-          onClick={onOpen}
+          zIndex={"overlay"}
+          onClick={ e =>{
+            e.stopPropagation()
+            onOpen()
+          }}
           icon={
             options?.icon ??
             <Icon stroke="tomato"
@@ -81,6 +85,7 @@ const DataListItem = (({ children, loading, options, onDelete, ...props }: DataL
                   ml={3}
                   onClick={async (e) => {
                     e.preventDefault()
+                    e.stopPropagation()
                     await onDelete()
                     onClose()
                   }}>

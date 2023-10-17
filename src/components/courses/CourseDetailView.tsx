@@ -120,7 +120,7 @@ const CourseDetailView = () => {
   }
 
   const handleSubmitI = async (values: InternalFormValues) => {
-    if (!editId) {
+    if (modalMode === 'edit' && !editId) {
       errorToast(
         `Error: ID del programa no encontrado. 
         Por favor, inténtelo nuevamente; si el problema continúa, contacte a TI.`
@@ -128,7 +128,7 @@ const CourseDetailView = () => {
       return
     }
     const newProgram: InternalProgram = {
-      id: modalMode === 'edit' ? editId : newId,
+      id: modalMode === 'edit' && editId? editId : newId,
       cityId: cityId ?? "",
       section: Number(sectionId),
       type: ProgramType.internal,
@@ -155,7 +155,7 @@ const CourseDetailView = () => {
   }
 
   const handleSubmitE = async (values: ExternalFormValues) => {
-    if (!editId) {
+    if (modalMode === 'edit' && !editId) {
       errorToast(
         `Error: ID del programa no encontrado. 
         Por favor, inténtelo nuevamente; si el problema continúa, contacte a TI.`
@@ -163,7 +163,7 @@ const CourseDetailView = () => {
       return
     }
     const newProgram: ExternalProgram = {
-      id: modalMode === 'edit' ? editId : newId,
+      id: modalMode === 'edit' && editId? editId : newId,
       cityId: cityId ?? "",
       section: Number(sectionId),
       type: ProgramType.external,
